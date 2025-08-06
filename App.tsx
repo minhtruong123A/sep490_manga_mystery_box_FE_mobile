@@ -6,6 +6,18 @@ import { StyleSheet, Text, View } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 // import icons
+import ShopIcon from './assets/icons/shop.svg';
+import ShopIconOutline from './assets/icons/shop-outline.svg';
+import AuctionIcon from './assets/icons/auction.svg';
+import AuctionIconOutline from './assets/icons/auction_outline.svg';
+import CartIcon from './assets/icons/cart.svg';
+import CartIconOutline from './assets/icons/cart_outline.svg';
+import ChatIcon from './assets/icons/chat.svg';
+import ChatIconOutline from './assets/icons/chat-outline.svg';
+import NotificationIcon from './assets/icons/notification.svg';
+import NotificationIconOutline from './assets/icons/notification_outline.svg';
+import SettingIcon from './assets/icons/setting.svg';
+import SettingIconOutline from './assets/icons/setting_outline.svg';
 
 // import screen
 import Shop from './src/screens/Shop';
@@ -16,32 +28,89 @@ import ProductShop from './src/screens/ProductShop';
 import BoxDetail from './src/screens/BoxDetail';
 import ProductDetail from './src/screens/ProductDetail';
 import Favorite from './src/screens/Favorite';
+import Chat from './src/screens/Chat';
+import Settings from './src/screens/Settings';
+
+//import header
+import CustomHeader from './src/components/Header';
+
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 // Stack Navigator for Shop (holds top Tabs) > BoxShop/ProductShop > Detail page 
-function BoxShopStack() {
+// function BoxShopStack() {
+//   return (
+//     <Stack.Navigator>
+//       <Stack.Screen name="Mystery Box" component={BoxShop}
+//         options={{ headerShown: false }} />
+//       <Stack.Screen name="Box Detail" component={BoxDetail}
+//         options={{ headerShown: true }} />
+//     </Stack.Navigator>
+//   );
+// }
+
+function ShopStack() {
   return (
     <Stack.Navigator>
-      <Stack.Screen name="Mystery Box" component={BoxShop}
-        options={{ headerShown: false }} />
-      <Stack.Screen name="Box Detail" component={BoxDetail}
-        options={{ headerShown: true }} />
+      <Stack.Screen
+        name="Shop"
+        component={Shop}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Mystery Box"
+        component={BoxShop}
+        options={{ headerShown: true }}
+      />
+      <Stack.Screen
+        name="Box Detail"
+        component={BoxDetail}
+        options={{ headerShown: true }}
+      />
+      <Stack.Screen
+        name="Collection Store"
+        component={ProductShop}
+        options={{ headerShown: true }}
+      />
+      <Stack.Screen
+        name="Collection Detail"
+        component={ProductDetail}
+        options={{ headerShown: true }}
+      />
     </Stack.Navigator>
   );
 }
 
-function ProductShopStack() {
+// function ProductShopStack() {
+//   return (
+//     <Stack.Navigator>
+//       <Stack.Screen name="Collection Store" component={ProductShop}
+//         options={{ headerShown: false }} />
+//       <Stack.Screen name="Collection Detail" component={ProductDetail}
+//         options={{ headerShown: true }} />
+//     </Stack.Navigator>
+//   );
+// }
+
+function CartStack() {
   return (
     <Stack.Navigator>
-      <Stack.Screen name="Collection Store" component={ProductShop}
-        options={{ headerShown: false }} />
-      <Stack.Screen name="Collection Detail" component={ProductDetail}
-        options={{ headerShown: true }} />
+      <Stack.Screen
+        name="Cart"
+        component={BoxShop}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Favorite"
+        component={Favorite}
+        options={{ headerShown: true, title: 'Favorites' }}
+      />
     </Stack.Navigator>
   );
 }
+
+
 
 //
 
@@ -93,7 +162,46 @@ export default function App() {
               ),
             }} />
         </Tab.Navigator> */}
-    </NavigationContainer>
+
+      <Tab.Navigator
+        screenOptions={({ route }) => ({
+          headerShown: false,
+          tabBarShowLabel: false,
+          tabBarStyle: {
+            height: 60,
+            backgroundColor: '#fff',
+            borderTopWidth: 0.5,
+            borderTopColor: '#ccc',
+          },
+          tabBarIcon: ({ focused }) => {
+            switch (route.name) {
+              case 'Shop':
+                return focused ? <ShopIcon width={24} height={24} /> : <ShopIconOutline width={24} height={24} />;
+              case 'Auction':
+                return focused ? <AuctionIcon width={24} height={24} /> : <AuctionIconOutline width={24} height={24} />;
+              case 'Cart':
+                return focused ? <CartIcon width={24} height={24} /> : <CartIconOutline width={24} height={24} />;
+              case 'Notification':
+                return focused ? <NotificationIcon width={24} height={24} /> : <NotificationIconOutline width={24} height={24} />;
+              case 'Settings':
+                return focused ? <SettingIcon width={24} height={24} /> : <SettingIconOutline width={24} height={24} />;
+              case 'Chat':
+                return focused ? <ChatIcon width={24} height={24} /> : <ChatIconOutline width={24} height={24} />;
+              default:
+                return null;
+            }
+          },
+        })}
+      >
+        <Tab.Screen name="Shop" component={ShopStack} />
+        <Tab.Screen name="Auction" component={Auction} />
+        <Tab.Screen name="Cart" component={CartStack} />
+        <Tab.Screen name="Chat" component={Chat} />
+        <Tab.Screen name="Settings" component={Settings} />
+      </Tab.Navigator>
+
+
+    </NavigationContainer >
   );
 }
 
