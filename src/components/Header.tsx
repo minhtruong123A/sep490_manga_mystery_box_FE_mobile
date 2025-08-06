@@ -1,9 +1,9 @@
-import React from 'react';
-import { View, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import ChatIcon from '../assets/icons/chat.svg';
-import AvatarIcon from '../assets/icons/avatar.svg';
-import { useNavigation } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { useNavigation } from '@react-navigation/native';
+import React from 'react';
+import { Image, StyleSheet, TouchableOpacity, View } from 'react-native';
+import AvatarIcon from '../../assets/icons/chat.svg';
+import ChatIcon from '../../assets/icons/chat.svg';
 import { RootTabParamList } from '../types/types';
 
 export default function Header() {

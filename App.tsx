@@ -1,38 +1,37 @@
-import React, { useEffect, useState } from 'react';
-import * as Font from 'expo-font';
-import { NavigationContainer } from '@react-navigation/native';
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useFonts } from 'expo-font';
+import { StatusBar } from 'expo-status-bar';
+import React, { useEffect } from 'react';
+import { StyleSheet } from 'react-native';
 // import icons
-import ShopIcon from './assets/icons/shop.svg';
-import ShopIconOutline from './assets/icons/shop-outline.svg';
 import AuctionIcon from './assets/icons/auction.svg';
 import AuctionIconOutline from './assets/icons/auction_outline.svg';
 import CartIcon from './assets/icons/cart.svg';
 import CartIconOutline from './assets/icons/cart_outline.svg';
-import ChatIcon from './assets/icons/chat.svg';
 import ChatIconOutline from './assets/icons/chat-outline.svg';
+import ChatIcon from './assets/icons/chat.svg';
 import NotificationIcon from './assets/icons/notification.svg';
 import NotificationIconOutline from './assets/icons/notification_outline.svg';
 import SettingIcon from './assets/icons/setting.svg';
 import SettingIconOutline from './assets/icons/setting_outline.svg';
+import ShopIconOutline from './assets/icons/shop-outline.svg';
+import ShopIcon from './assets/icons/shop.svg';
 
 // import screen
-import Shop from './src/screens/Shop';
 import Auction from './src/screens/Auction';
-import Profile from './src/screens/Profile';
-import BoxShop from './src/screens/BoxShop';
-import ProductShop from './src/screens/ProductShop';
 import BoxDetail from './src/screens/BoxDetail';
-import ProductDetail from './src/screens/ProductDetail';
-import Favorite from './src/screens/Favorite';
+import BoxShop from './src/screens/BoxShop';
 import Chat from './src/screens/Chat';
+import Favorite from './src/screens/Favorite';
+import ProductDetail from './src/screens/ProductDetail';
+import ProductShop from './src/screens/ProductShop';
 import Settings from './src/screens/Settings';
+import Shop from './src/screens/Shop';
 
 //import header
-import CustomHeader from './src/components/Header';
+import * as SplashScreen from 'expo-splash-screen';
 
 
 const Stack = createNativeStackNavigator();
@@ -110,25 +109,35 @@ function CartStack() {
   );
 }
 
-
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
 
 //
 
 export default function App() {
-  const [fontsLoaded, setFontsLoaded] = useState(false);
+  
+  const [fontsLoaded, error] = useFonts({
+    'OleoScript-Bold': require('./assets/fonts/Oleo_Script/OleoScript-Bold.ttf'),
+    'OleoScript-Regular': require('./assets/fonts/Oleo_Script/OleoScript-Regular.ttf'),
+    'Oxanium-Bold': require('./assets/fonts/Oxanium/Oxanium-Bold.ttf'),
+    'Oxanium-SemiBold': require('./assets/fonts/Oxanium/Oxanium-SemiBold.ttf'),
+    'Oxanium-Medium': require('./assets/fonts/Oxanium/Oxanium-Medium.ttf'),
+    'Oxanium-Regular': require('./assets/fonts/Oxanium/Oxanium-Regular.ttf'),
+    'Oxanium-Light': require('./assets/fonts/Oxanium/Oxanium-Light.ttf'),
+    'Oxanium-ExtraLight': require('./assets/fonts/Oxanium/Oxanium-ExtraLight.ttf'),
+  });
 
   useEffect(() => {
-    Font.loadAsync({
-      'OleoScript-Bold': require('./assets/fonts/Oleo_Script/OleoScript-Bold.ttf'),
-      'OleoScript-Regular': require('./assets/fonts/Oleo_Script/OleoScript-Regular.ttf'),
-      'Oxanium-Bold': require('./assets/fonts/Oxanium/static/Oxanium-Bold.ttf'),
-      'Oxanium-SemiBold': require('./assets/fonts/Oxanium/static/Oxanium-SemiBold.ttf'),
-      'Oxanium-Medium': require('./assets/fonts/Oxanium/static/Oxanium-Medium.ttf'),
-      'Oxanium-Regular': require('./assets/fonts/Oxanium/static/Oxanium-Regular.ttf'),
-      'Oxanium-Light': require('./assets/fonts/Oxanium/static/Oxanium-Light.ttf'),
-      'Oxanium-ExtraLight': require('./assets/fonts/Oxanium/static/Oxanium-ExtraLight.ttf'),
-    }).then(() => setFontsLoaded(true));
-  }, []);
+    if (fontsLoaded || error) {
+        SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, error])
 
   if (!fontsLoaded) return null;
 
@@ -204,12 +213,3 @@ export default function App() {
     </NavigationContainer >
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
