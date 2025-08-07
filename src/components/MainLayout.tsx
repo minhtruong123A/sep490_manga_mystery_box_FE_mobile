@@ -1,7 +1,10 @@
 // src/components/MainLayout.tsx
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import Header from './Header';
+import Header from './CustomHeader';
+
+//not used anymore
+
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
     return (

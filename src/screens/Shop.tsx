@@ -1,15 +1,34 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+// src/screens/Shop.tsx
 
-export default function Chat() {
+import React from 'react';
+import { View, Button, StyleSheet } from 'react-native';
+// Import type từ file types.ts tập trung
+import { ShopScreenProps } from '../types/types';
+
+// Áp dụng type đã import
+export default function Shop({ navigation }: ShopScreenProps) {
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Chat Page</Text>
+      <Button
+        title="Go to Mystery Box Shop"
+        onPress={() => navigation.navigate('Mystery Box')}
+      />
+      <View style={styles.separator} />
+      <Button
+        title="Go to Collection Store"
+        onPress={() => navigation.navigate('Collection Store')}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  text: { fontSize: 18 },
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  separator: {
+    marginVertical: 10,
+  },
 });

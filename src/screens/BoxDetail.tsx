@@ -1,7 +1,18 @@
-import React from 'react'
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 
 export default function BoxDetail() {
   return (
-    <div>BoxDetail</div>
-  )
+    <View style={styles.container}>
+      <Text>Box Detail Screen</Text>
+    </View>
+  );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});
