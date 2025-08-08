@@ -1,107 +1,115 @@
-import React, { useEffect, useState } from 'react';
-import * as Font from 'expo-font';
-import { NavigationContainer } from '@react-navigation/native';
-import { StatusBar } from 'expo-status-bar';
+// App.tsx
+
+import React, { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-// import icons
+import { useFonts } from 'expo-font';
+import { StatusBar } from 'expo-status-bar';
+import * as SplashScreen from 'expo-splash-screen';
 
-// import screen
-import Shop from './src/screens/Shop';
-import Auction from './src/screens/Auction';
+// Auth Context
+import { AuthProvider, useAuth } from './src/context/AuthContext';
+
+// Navigators
+import MainTabs from './src/navigation/MainNavigator';
+
+// Screens
+import Auth from './src/screens/Auth';
+import TopUpPackages from './src/screens/TopUpPackages';
+import ShoppingCart from './src/screens/ShoppingCart';
+import Chatbox from './src/screens/Chatbox';
 import Profile from './src/screens/Profile';
-import BoxShop from './src/screens/BoxShop';
-import ProductShop from './src/screens/ProductShop';
-import BoxDetail from './src/screens/BoxDetail';
-import ProductDetail from './src/screens/ProductDetail';
-import Favorite from './src/screens/Favorite';
+import Settings from './src/screens/Settings';
+import UpdateProfile from './src/screens/UpdateProfile';
+import SellerProfile from './src/screens/SellerProfile';
+import AuctionDetail from './src/screens/AuctionDetail';
+import OrderHistory from './src/screens/OrderHistory';
+import ExchangeRequests from './src/screens/ExchangeRequests';
+import WithdrawRequest from './src/screens/WithdrawRequest';
 
-const Stack = createNativeStackNavigator();
-const Tab = createBottomTabNavigator();
+// Types
+import { RootStackParamList, ShoppingCartStackParamList } from './src/types/types';
 
-// Stack Navigator for Shop (holds top Tabs) > BoxShop/ProductShop > Detail page 
-function BoxShopStack() {
+const RootStack = createNativeStackNavigator<RootStackParamList>();
+const ShoppingCartStackNav = createNativeStackNavigator<ShoppingCartStackParamList>();
+
+// --- Navigator con cho Giỏ hàng ---
+function ShoppingCartStack() {
   return (
-    <Stack.Navigator>
-      <Stack.Screen name="Mystery Box" component={BoxShop}
-        options={{ headerShown: false }} />
-      <Stack.Screen name="Box Detail" component={BoxDetail}
-        options={{ headerShown: true }} />
-    </Stack.Navigator>
-  );
+    <ShoppingCartStackNav.Navigator screenOptions={{ title: 'Your Cart' }}>
+      <ShoppingCartStackNav.Screen name="ShoppingCart" component={ShoppingCart} />
+    </ShoppingCartStackNav.Navigator>
+  )
 }
 
-function ProductShopStack() {
+const HelpScreen = () => <View style={styles.container}><Text>Help & Feedback</Text></View>;
+
+// --- Navigator chính của App ---
+function AppNavigator() {
+  const { userToken } = useAuth();
+
   return (
-    <Stack.Navigator>
-      <Stack.Screen name="Collection Store" component={ProductShop}
-        options={{ headerShown: false }} />
-      <Stack.Screen name="Collection Detail" component={ProductDetail}
-        options={{ headerShown: true }} />
-    </Stack.Navigator>
+    <RootStack.Navigator>
+      {userToken == null ? (
+        // --- LUỒNG CHƯA ĐĂNG NHẬP ---
+        <RootStack.Screen
+          name="Auth"
+          component={Auth}
+          options={{ headerShown: false }}
+        />
+      ) : (
+        // --- LUỒNG ĐÃ ĐĂNG NHẬP ---
+        <>
+          <RootStack.Screen name="MainTabs" component={MainTabs} options={{ headerShown: false }} />
+          <RootStack.Screen name="OrderHistory" component={OrderHistory} options={{ title: 'Order History' }} />
+          <RootStack.Screen name="ExchangeRequests" component={ExchangeRequests} options={{ title: 'Exchange History' }} />
+          <RootStack.Screen name="AuctionDetail" component={AuctionDetail} options={{ title: 'Auction Room' }} />
+          <RootStack.Screen name="WithdrawRequest" component={WithdrawRequest} options={{ presentation: 'modal', title: 'Yêu cầu rút tiền' }} />
+          <RootStack.Screen name="Chatbox" component={Chatbox} options={({ route }) => ({ title: route.params.userName })} />
+          <RootStack.Screen name="SellerProfile" component={SellerProfile} options={{ title: 'Seller Profile' }} />
+          <RootStack.Screen name="ShoppingCartStack" component={ShoppingCartStack} options={{ presentation: 'modal', headerShown: false }} />
+          <RootStack.Screen name="TopUpPackages" component={TopUpPackages} options={{ presentation: 'modal', title: 'Select Top-up Package' }} />
+          <RootStack.Screen name="Profile" component={Profile} options={{ title: 'Profile' }} />
+          <RootStack.Screen name="Settings" component={Settings} />
+          <RootStack.Screen name="UpdateProfile" component={UpdateProfile} options={{ title: 'Update Profile' }} />
+          <RootStack.Screen name="Help & Feedback" component={HelpScreen} options={{ title: 'Help' }} />
+        </>
+      )}
+    </RootStack.Navigator>
   );
 }
-
-//
 
 export default function App() {
-  const [fontsLoaded, setFontsLoaded] = useState(false);
+  const [fontsLoaded] = useFonts({
+    'Oxanium-Bold': require('./assets/fonts/Oxanium/Oxanium-Bold.ttf'),
+    'Oxanium-SemiBold': require('./assets/fonts/Oxanium/Oxanium-SemiBold.ttf'),
+    'Oxanium-Regular': require('./assets/fonts/Oxanium/Oxanium-Regular.ttf'),
+  });
 
   useEffect(() => {
-    Font.loadAsync({
-      'OleoScript-Bold': require('./assets/fonts/Oleo_Script/OleoScript-Bold.ttf'),
-      'OleoScript-Regular': require('./assets/fonts/Oleo_Script/OleoScript-Regular.ttf'),
-      'Oxanium-Bold': require('./assets/fonts/Oxanium/static/Oxanium-Bold.ttf'),
-      'Oxanium-SemiBold': require('./assets/fonts/Oxanium/static/Oxanium-SemiBold.ttf'),
-      'Oxanium-Medium': require('./assets/fonts/Oxanium/static/Oxanium-Medium.ttf'),
-      'Oxanium-Regular': require('./assets/fonts/Oxanium/static/Oxanium-Regular.ttf'),
-      'Oxanium-Light': require('./assets/fonts/Oxanium/static/Oxanium-Light.ttf'),
-      'Oxanium-ExtraLight': require('./assets/fonts/Oxanium/static/Oxanium-ExtraLight.ttf'),
-    }).then(() => setFontsLoaded(true));
+    async function prepare() {
+      try { await SplashScreen.preventAutoHideAsync(); } catch (e) { console.warn(e); }
+    }
+    prepare();
   }, []);
+
+  useEffect(() => {
+    if (fontsLoaded) { SplashScreen.hideAsync(); }
+  }, [fontsLoaded]);
 
   if (!fontsLoaded) return null;
 
   return (
-    <NavigationContainer>
-      <StatusBar style="auto" />
-      {/* <Tab.Navigator
-          initialRouteName='Home Page'
-          screenOptions={{
-            tabBarActiveTintColor: '#F4B400',  // Custom active color
-            tabBarInactiveTintColor: 'gray', // Custom inactive color
-          }}
-        >
-          <Tab.Screen
-            name="Home Page"
-            component={HomeStack}
-            options={{
-              headerShown: false,
-              tabBarIcon: ({ color }) => (
-                <Entypo name="home" size={24} color={color} />
-              ),
-            }}
-          />
-          <Tab.Screen
-            name="Saved Toys"
-            component={SaveStack}
-            options={{
-              headerShown: false,
-              tabBarIcon: ({ color }) => (
-                <FontAwesome name="bookmark" size={24} color={color} />
-              ),
-            }} />
-        </Tab.Navigator> */}
-    </NavigationContainer>
+    <AuthProvider>
+      <NavigationContainer>
+        <StatusBar style="auto" />
+        <AppNavigator />
+      </NavigationContainer>
+    </AuthProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 });
