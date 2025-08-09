@@ -13,6 +13,7 @@ import { AuthProvider, useAuth } from './src/context/AuthContext';
 
 // Navigators
 import MainTabs from './src/navigation/MainNavigator';
+import { navigationRef } from './src/navigation/RootNavigation';
 
 // Screens
 import Auth from './src/screens/Auth';
@@ -102,7 +103,7 @@ export default function App() {
 
   return (
     <AuthProvider>
-      <NavigationContainer>
+      <NavigationContainer ref={navigationRef}>
         <StatusBar style="auto" />
         <AppNavigator />
       </NavigationContainer>
