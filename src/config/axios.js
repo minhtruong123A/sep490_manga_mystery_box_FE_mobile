@@ -6,11 +6,10 @@ import { CS_API, BACKUP_CS_API, PY_API, BACKUP_PY_API } from '@env';
 // Lấy API URL từ biến môi trường
 // const CS_API = "https://api.mmb.io.vn/cs";
 // const BACKUP_CS_API = "https://mmb-be-dotnet.onrender.com";
-
 // const PY_API = "https://api.mmb.io.vn/py";
 // const BACKUP_PY_API = "https://sep490-manga-mystery-box-pybe.onrender.com";
-
 // Tạo instance Axios cho từng API
+
 const primaryAxios = axios.create({
   baseURL: CS_API,
   timeout: 10000,
