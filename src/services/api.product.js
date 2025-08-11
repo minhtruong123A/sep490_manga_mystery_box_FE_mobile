@@ -1,4 +1,3 @@
-import { toast } from "react-toastify"
 import { apiWithFallback } from "../config/axios";
 
 //api using for get all of product on sale

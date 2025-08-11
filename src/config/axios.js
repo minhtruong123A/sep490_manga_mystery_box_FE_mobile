@@ -30,6 +30,9 @@ const backupPythonAxios = axios.create({
   timeout: 10000,
 });
 
+export const IMAGE_BASE_URL = `${CS_API}/api/ImageProxy`;
+export const BACKUP_IMAGE_BASE_URL = `${BACKUP_CS_API}/api/ImageProxy`;
+
 attachInterceptorsTo(primaryAxios);
 attachInterceptorsTo(backupAxios);
 attachInterceptorsTo(pythonAxios);
@@ -63,6 +66,11 @@ function attachInterceptorsTo(instance) {
     },
     async (error) => {
       const originalRequest = error.config;
+
+      // Nếu chính request refresh token bị lỗi thì throw luôn để vào catch
+      if (originalRequest.url.includes('/api/user/auth/refresh')) {
+        throw new Error("Refresh token request failed");
+      }
 
       if (error.response?.status === 401 && !originalRequest._retry) {
         originalRequest._retry = true;
@@ -107,20 +115,20 @@ function attachInterceptorsTo(instance) {
 // Fallback API cho C# backend
 const apiWithFallback = async (config) => {
   try {
-    return await primaryAxios(config);
-  } catch (err) {
-    console.warn("[Fallback] C# API failed. Retrying with backup...");
     return await backupAxios(config);
+  } catch (err) {
+    // console.warn("[Fallback] C# API failed. Retrying with backup...");
+    // return await backupAxios(config);     return await primaryAxios(config);  
   }
 };
 
 // Fallback API cho Python backend
 const pythonApiWithFallback = async (config) => {
   try {
-    return await pythonAxios(config);
-  } catch (err) {
-    console.warn("[Fallback] Python API failed. Retrying with backup...");
     return await backupPythonAxios(config);
+  } catch (err) {
+    // console.warn("[Fallback] Python API failed. Retrying with backup...");
+    // return await backupPythonAxios(config);     return await pythonAxios(config); 
   }
 };
 

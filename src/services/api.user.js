@@ -174,7 +174,7 @@ export const changePassword = async ({ userId, curentPassword, newPassword, conf
 export const updateProfile = async (data, isFormData = false) => {
   try {
     let body = data;
-    // let headers = {};
+    let headers = {};
 
     if (!isFormData) {
       body = {
@@ -185,7 +185,7 @@ export const updateProfile = async (data, isFormData = false) => {
         bankid: data.bankid
       };
     } else {
-      // headers["Content-Type"] = "multipart/form-data";
+      headers["Content-Type"] = "multipart/form-data";
 
       console.log("[updateProfile] FormData Entries:");
       for (let pair of body.entries()) {
@@ -197,7 +197,7 @@ export const updateProfile = async (data, isFormData = false) => {
       method: "post",
       url: "/api/User/profile/update-profile",
       data: body,
-      // headers,
+      headers,
       requiresAuth: true,
     });
 
@@ -208,6 +208,7 @@ export const updateProfile = async (data, isFormData = false) => {
       console.error('[updateProfile] Error Response:', {
         status: error.response.status,
         data: error.response.data,
+        headers: error.response.headers,
       });
     }
     throw error;

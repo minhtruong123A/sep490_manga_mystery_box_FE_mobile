@@ -4,6 +4,9 @@ import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { CompositeScreenProps, NavigatorScreenParams } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { MaterialTopTabScreenProps } from '@react-navigation/material-top-tabs';
+import type { MaterialTopTabNavigationProp } from '@react-navigation/material-top-tabs';
+
+export type AuthTabNavigationProp = MaterialTopTabNavigationProp<AuthStackParamList>;
 
 // CẬP NHẬT: Thêm AuthStack và thay đổi RootStack
 export type AuthStackParamList = {
@@ -67,7 +70,7 @@ export type RootStackParamList = {
     Auth: undefined; // Màn hình chứa tab Login/Register
     MainTabs: NavigatorScreenParams<RootTabParamList>;
     ShoppingCartStack: NavigatorScreenParams<ShoppingCartStackParamList>;
-    Profile: undefined;
+    Profile: { reload?: number };
     Settings: undefined;
     UpdateProfile: undefined;
     'Help & Feedback': undefined;
@@ -101,3 +104,159 @@ export type ShoppingCartTopTabScreenProps<T extends keyof ShoppingCartTopTabPara
         MaterialTopTabScreenProps<ShoppingCartTopTabParamList, T>,
         NativeStackScreenProps<ShoppingCartStackParamList>
     >;
+
+
+// khai bao type model
+export type ProductInBox = {
+    // Bạn có thể mở rộng các trường này dựa trên dữ liệu API thực tế
+    productId: string;
+    productName: string;
+    urlImage: string;
+};
+
+/**
+ * Kiểu dữ liệu cho mỗi Mystery Box trong danh sách (Trang BoxShop).
+ * Khớp với response của API /get-all-mystery-box.
+ */
+export type MysteryBoxItem = {
+    id: string;
+    mysteryBoxName: string;
+    mysteryBoxPrice: number;
+    urlImage: string;
+    collectionTopic: string;
+    createdAt: string; // Đây là một chuỗi ISO 8601 date string
+    status: number;
+};
+
+/**
+ * Kiểu dữ liệu cho chi tiết một Mystery Box (Trang BoxDetail).
+ * Khớp với response của API /get-mystery-box-detail/{id}.
+ */
+export type MysteryBoxDetailItem = {
+    id: string;
+    status: number;
+    mysteryBoxName: string;
+    mysteryBoxDescription: string;
+    mysteryBoxPrice: number;
+    collectionTopic: string;
+    urlImage: string;
+    totalProduct: number;
+    products: ProductInBox[]; // Mảng các sản phẩm có thể có trong box
+};
+
+export type ProductOnSaleItem = {
+    id: string;
+    name: string;
+    price: number;
+    userId: string;
+    username: string;
+    quantity: number;
+    topic: string;
+    urlImage: string;
+    rarityName: string; // ví dụ: 'epic', 'common'
+    isSell: boolean;
+    createdAt: string;
+};
+
+/**
+ * Kiểu dữ liệu cho chi tiết một sản phẩm (Trang ProductDetail).
+ * Khớp với response của API /get-product-on-sale/{id}.
+ */
+export type ProductOnSaleDetailItem = {
+    id: string;
+    name: string;
+    price: number;
+    userId: string;
+    username: string;
+    userProfileImage: string | null; // Có thể null
+    topic: string;
+    urlImage: string;
+    rateName: string; // API chi tiết dùng 'rateName'
+    description: string;
+    quantity: number;
+    isSell: boolean;
+};
+
+// export type Comment = {
+//     id: string;
+//     productId: string;
+//     author: string;
+//     avatarUrl: string;
+//     text: string;
+//     rating: number;
+//     timestamp: string;
+// };
+
+// --- THÊM MỚI: TYPE CHO USER PROFILE ---
+export type UserProfile = {
+    id: string;
+    username: string;
+    email: string;
+    profileImage: string | null; // Có thể null
+    // Bạn có thể thêm các trường khác nếu cần
+};
+
+// --- THÊM MỚI: TYPE CHO ORDER HISTORY ---
+export type OrderHistoryItem = {
+    type: 'ProductBuy' | 'Box' | 'ProductSell';
+    boxId: string | null;
+    boxName: string | null;
+    sellProductId: string | null;
+    productId: string | null;
+    productName: string | null;
+    sellerUsername: string | null;
+    // LƯU Ý: API trả về sellerUrlImage, có vẻ đây là ảnh của sản phẩm/box.
+    // Chúng ta sẽ tạm dùng trường này làm ảnh hiển thị.
+    sellerUrlImage: string | null;
+    isSellSellProduct: boolean | null;
+    quantity: number;
+    totalAmount: number;
+    transactionCode: string;
+    purchasedAt: string; // ISO date string
+};
+
+// --- THÊM MỚI: TYPES CHO PAYMENT & TRANSACTION ---
+
+export type WhoAmIResponseData = {
+    access_token: string;
+    token_type: string;
+    user_id: string;
+    username: string;
+    wallet_amount: number;
+    profile_image: string | null;
+    role: string;
+};
+
+export type TransactionItem = {
+    id: string;
+    type: 'Recharge' | 'Withdraw'; // Và các loại khác nếu có
+    status: 'Pending' | 'Success' | 'Cancel';
+    amount: number;
+    transactionCode: string;
+    dataTime: string; // ISO date string
+};
+
+// --- THÊM MỚI: TYPE CHO RATING ITEM ---
+export type RatingItem = {
+    id: string;
+    sellProductId: string;
+    profileImage: string | null;
+    username: string;
+    rating: number;
+    createdAt: string;
+    updatedAt: string;
+    status: number;
+};
+
+// --- CẬP NHẬT: TYPE CHO COMMENT ĐỂ KHỚP VỚI API ---
+export type Comment = {
+    id: string;
+    sellProductId: string;
+    profileImage: string | null;
+    username: string;
+    content: string; // Đổi từ 'text' thành 'content'
+    createdAt: string; // Đổi từ 'timestamp' thành 'createdAt'
+    updatedAt: string;
+    status: number;
+    // Bỏ các trường không có trong API mới như 'rating', 'author'
+};

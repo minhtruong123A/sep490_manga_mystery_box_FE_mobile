@@ -19,29 +19,29 @@ export const fetchUserInfo = async () => {
 
 //login api using for user to login
 export const loginApi = async (userName, password) => {
-  // const params = new URLSearchParams();
-  const formData = new FormData();
-  formData.append('grant_type', 'password');
-  formData.append('username', userName);
-  formData.append('password', password);
+  const params = new URLSearchParams();
+  params.append('grant_type', 'password');
+  params.append('username', userName);
+  params.append('password', password);
 
   try {
     const response = await pythonApiWithFallback({
       method: "post",
       url: "/api/user/auth/login",
-      data: formData,
+      data: params,
       headers: {
         'accept': 'application/json',
-        // 'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
     });
 
     return response.data;
   } catch (error) {
-    console.error("Login failed:", error);
+    // console.error("Login failed:", error);
     throw error;
   }
 };
+
 
 //register api help user login when they want to be an part of the system
 export const registerApi = async ({ userName, email, password }) => {
@@ -64,7 +64,7 @@ export const registerApi = async ({ userName, email, password }) => {
 
     return response.data;
   } catch (error) {
-    console.error("Register failed:", error);
+    // console.error("Register failed:", error);
     throw error;
   }
 };
