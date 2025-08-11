@@ -151,14 +151,14 @@ export default function SellerProfile({ route }: RootStackScreenProps<'SellerPro
                         >
                             <Text style={styles.actionButtonText}>Chat</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity
+                        {/* <TouchableOpacity
                             style={[styles.actionButton, isFollowing && styles.followingButton]}
                             onPress={() => setIsFollowing(!isFollowing)}
                         >
                             <Text style={[styles.actionButtonText, isFollowing && styles.followingButtonText]}>
                                 {isFollowing ? 'Following' : 'Follow'}
                             </Text>
-                        </TouchableOpacity>
+                        </TouchableOpacity> */}
                         {/* <TouchableOpacity style={styles.actionButton} onPress={() => setReportModalVisible(true)}>
                             <Text style={styles.actionButtonText}>Report</Text>
                         </TouchableOpacity> */}

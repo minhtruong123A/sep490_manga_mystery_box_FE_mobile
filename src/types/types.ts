@@ -260,3 +260,65 @@ export type Comment = {
     status: number;
     // Bỏ các trường không có trong API mới như 'rating', 'author'
 };
+
+// --- THÊM MỚI: TYPES CHO EXCHANGE REQUEST ---
+
+export type ExchangeProductInfo = {
+    productExchangeId: string;
+    quantityProductExchange: number;
+    status: number;
+    image: string | null;
+    // Giả sử API sẽ trả về tên sản phẩm trong tương lai
+    name?: string;
+};
+
+export type ExchangeRequestItem = {
+    id: string;
+    buyerId: string;
+    itemReciveId: string; // ID vật phẩm của bạn
+    iamgeItemRecive: string | null; // Ảnh vật phẩm của bạn
+    itemGiveId: string; // ID vật phẩm của họ
+    status: number; // 1: Pending, 2: Cancel, 3: Reject, 4: Finish
+    datetime: string;
+    isFeedback: boolean;
+    products: ExchangeProductInfo[]; // Vật phẩm của họ
+};
+
+export type FeedbackItem = {
+    id: string;
+    userName: string;
+    content: string;
+    rating: number;
+    createAt: string;
+};
+
+// Type này dùng để tổng hợp dữ liệu trong component
+export type ProcessedExchangeRequest = ExchangeRequestItem & {
+    requesterUsername: string;
+    requesterProfileImage: string | null;
+    feedback?: FeedbackItem[];
+};
+
+// --- THÊM MỚI: TYPES CHO CART ---
+
+// Kiểu dữ liệu cho một sản phẩm trong giỏ hàng (từ API viewCart)
+export type CartProductItem = {
+    sellProductId: string;
+    // product object bên trong có cấu trúc giống ProductOnSaleDetailItem
+    product: ProductOnSaleDetailItem;
+    quantity: number;
+};
+
+// Kiểu dữ liệu cho một box trong giỏ hàng (từ API viewCart)
+export type CartBoxItem = {
+    mangaBoxId: string;
+    // box object bên trong có cấu trúc giống MysteryBoxItem
+    box: MysteryBoxItem;
+    quantity: number;
+};
+
+// Kiểu dữ liệu cho toàn bộ giỏ hàng
+export type CartData = {
+    products: CartProductItem[];
+    boxes: CartBoxItem[];
+};

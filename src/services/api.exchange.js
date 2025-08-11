@@ -23,7 +23,7 @@ export const getReceive = async () => {
       url: "/api/Exchange/with-products/by-receive",
       requiresAuth: true, // interceptor sẽ tự gắn token
     });
-    return response.data;
+    return response;
   } catch (error) {
     console.error("Error when fetch api by-receive:", error);
     throw error;

@@ -15,7 +15,8 @@ import {
 } from '../types/types';
 
 // THÊM MỚI: Import API và component ảnh
-import { getProductOnSaleDetail } from '../services/api.product';
+import { getProductOnSaleDetail, buyProductOnSale } from '../services/api.product';
+import { addToCart } from '../services/api.cart'; // THÊM MỚI
 import ApiImage from '../components/ApiImage';
 import { censorText } from '../utils/censorText';  // Import utility mới
 import { useAuth } from '../context/AuthContext';
@@ -121,6 +122,9 @@ export default function ProductDetail({ route }: ShopStackScreenProps<'Collectio
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // THÊM MỚI: State riêng cho các hành động ở footer để không bị xung đột
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [isBuyingNow, setIsBuyingNow] = useState(false);
 
   // GIỮ NGUYÊN: State và logic cho comment và report
   const [isReportModalVisible, setReportModalVisible] = useState(false);
@@ -129,6 +133,64 @@ export default function ProductDetail({ route }: ShopStackScreenProps<'Collectio
   const [isSubmitting, setIsSubmitting] = useState(false); // State cho việc gửi comment/report
 
   // --- Data Fetching ---
+  // THÊM MỚI: Hàm xử lý cho nút "Add to Cart"
+  const handleAddToCart = async () => {
+    if (isAddingToCart) return;
+    setIsAddingToCart(true);
+    try {
+      const response = await addToCart({ sellProductId: productId, mangaBoxId: "" });
+      if (response.status) {
+        Alert.alert("Success", `${product?.name} has been added to your cart.`);
+      } else {
+        throw new Error(response.error || "Failed to add to cart.");
+      }
+    } catch (err: any) {
+      Alert.alert("Error", err.message || "An error occurred.");
+    } finally {
+      setIsAddingToCart(false);
+    }
+  };
+
+  // THÊM MỚI: Hàm xử lý cho nút "Buy Now"
+  // HÀM ĐÃ ĐƯỢC CẬP NHẬT
+  const handleBuyNow = async () => {
+    if (isBuyingNow || !product) return;
+    setIsBuyingNow(true);
+    try {
+      // buyProductOnSale sẽ trả về object: { status, data, error, ... }
+      const response = await buyProductOnSale({ sellProductId: productId, quantity: 1 });
+
+      // SỬA LỖI: Chỉ cần kiểm tra 'response.status' ở lớp ngoài cùng.
+      if (response.status) {
+        Alert.alert(
+          "Purchase Successful!",
+          response.data?.message || "Thank you for your purchase." // Lấy message động từ API
+        );
+        navigation.navigate('OrderHistory');
+      } else {
+        // Nếu status là false, ném lỗi với message từ API để khối catch xử lý
+        throw new Error(response.error || "Failed to complete purchase.");
+      }
+    } catch (err: any) {
+      // Khối catch này giờ sẽ bắt các lỗi được throw từ trên và lỗi mạng/server
+      const errorMessage = err.message || "An error occurred during purchase.";
+
+      // Logic xử lý 'out of stock' vẫn hữu ích và nên giữ lại
+      if (errorMessage.toLowerCase().includes("out of stock or no longer available")) {
+        Alert.alert(
+          "Product Unavailable",
+          "This product may no longer be available or the quantity has changed.",
+          [{ text: "OK" }]
+        );
+      } else {
+        Alert.alert("Purchase Failed", errorMessage);
+      }
+    } finally {
+      setIsBuyingNow(false);
+    }
+  };
+
+
   const fetchData = async () => {
     try {
       // Fetch đồng thời ratings và comments
@@ -168,7 +230,7 @@ export default function ProductDetail({ route }: ShopStackScreenProps<'Collectio
       try {
         setLoading(true);
         const response = await getProductOnSaleDetail(productId);
-        if (response.status && response.data) {
+        if (response.status && response.data && response.data.quantity > 0) {
           setProduct(response.data);
           // Sau khi có productId, fetch ratings và comments
           await fetchData();
@@ -328,32 +390,46 @@ export default function ProductDetail({ route }: ShopStackScreenProps<'Collectio
         {/* GIỮ NGUYÊN FOOTER, CHỈ CẬP NHẬT DỮ LIỆU */}
 
 
+        {/* CẬP NHẬT: Footer với các hàm onPress mới */}
         <View style={styles.footer}>
           {!isMyProduct ? (
             <View style={styles.leftActions}>
               <TouchableOpacity
                 style={styles.iconButton}
                 onPress={() => navigation.navigate('Chatbox', { userName: product.username, avatarUrl: product.userProfileImage || '' })}
+                disabled={isAddingToCart || isBuyingNow}
               >
                 <ChatIcon width={24} height={24} />
                 <Text style={styles.iconButtonText}>Chat</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.iconButton}
-                onPress={() => Alert.alert('Thêm vào giỏ hàng', `${product.name} đã được thêm vào mục yêu thích.`)}
+                onPress={handleAddToCart}
+                disabled={isAddingToCart || isBuyingNow}
               >
-                <CartIconOutline width={24} height={24} />
+                {isAddingToCart ? (
+                  <ActivityIndicator size="small" color="#d9534f" />
+                ) : (
+                  <CartIconOutline width={24} height={24} />
+                )}
                 <Text style={styles.iconButtonText}>Add to Cart</Text>
               </TouchableOpacity>
             </View>
           ) : (
-            // Có thể hiển thị một khoảng trống hoặc nút khác cho chính mình
             <View style={styles.leftActions} />
           )}
-          {/* CẬP NHẬT: Thay đổi nút Buy now nếu là sản phẩm của mình */}
+
           {!isMyProduct ? (
-            <TouchableOpacity style={styles.buyButton} onPress={() => Alert.alert('Notice', 'This feature is under development!')}>
-              <Text style={styles.buyButtonText}>Buy now</Text>
+            <TouchableOpacity
+              style={[styles.buyButton, (isBuyingNow || isAddingToCart) && styles.disabledButton]}
+              onPress={handleBuyNow}
+              disabled={isBuyingNow || isAddingToCart}
+            >
+              {isBuyingNow ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.buyButtonText}>Buy now</Text>
+              )}
             </TouchableOpacity>
           ) : (
             <View style={[styles.buyButton, styles.disabledButton]}>

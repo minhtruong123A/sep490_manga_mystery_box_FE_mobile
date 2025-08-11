@@ -116,9 +116,9 @@ export default function CustomHeader() {
   const menuItems = [
     { label: 'Profile', action: () => navigation.navigate('Profile', { reload: Date.now() }), icon: <ProfileIcon /> },
     { label: 'Order History', action: () => navigation.navigate('OrderHistory'), icon: <OrderIcon /> },
-    { label: 'Exchange History', action: () => navigation.navigate('ExchangeRequests'), icon: <ExchangeIconMenu /> },
-    { label: 'Settings', action: () => navigation.navigate('Settings'), icon: <SettingsIcon /> },
-    { label: 'Help & Feedback', action: () => navigation.navigate('Help & Feedback'), icon: <HelpIcon /> },
+    { label: 'Exchanges', action: () => navigation.navigate('ExchangeRequests'), icon: <ExchangeIconMenu /> },
+    // { label: 'Settings', action: () => navigation.navigate('Settings'), icon: <SettingsIcon /> },
+    { label: 'Policies', action: () => navigation.navigate('Help & Feedback'), icon: <HelpIcon /> },
     { label: 'Log out', action: handleLogout, icon: <LogoutIcon /> },
   ];
 

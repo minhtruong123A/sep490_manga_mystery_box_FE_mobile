@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native'; // Thêm useFocusEffect
 import {
   StyleSheet,
   Text,
@@ -29,30 +30,30 @@ export default function BoxShop({ navigation }: ShopTopTabScreenProps<'Mystery B
   const [activeCollection, setActiveCollection] = useState('All');
   const [activePriceSort, setActivePriceSort] = useState<string | null>(null);
 
-  // THÊM MỚI: Sử dụng useEffect để gọi API khi component mount
-  useEffect(() => {
-    const fetchBoxes = async () => {
-      try {
-        setLoading(true);
-        const response = await getAllMysteryBoxes();
-        // API trả về { status, data, error, errorCode }, ta lấy phần data
-        if (response.status && Array.isArray(response.data)) {
-          const activeBoxes = response.data.filter((box: MysteryBoxItem) => box.status === 1);
-          setBoxes(activeBoxes);
-        } else {
-          throw new Error('Invalid data format received from API');
-        }
-        setError(null);
-      } catch (err: any) {
-        setError(err.message || 'Failed to fetch mystery boxes.');
-        console.error(err);
-      } finally {
-        setLoading(false);
+  const fetchBoxes = useCallback(async () => {
+    try {
+      // Không set loading lại mỗi lần focus để tránh màn hình bị giật
+      const response = await getAllMysteryBoxes();
+      if (response.status && Array.isArray(response.data)) {
+        const activeBoxes = response.data.filter((box: MysteryBoxItem) => box.status === 1);
+        setBoxes(activeBoxes);
+      } else {
+        throw new Error('Invalid data format received from API');
       }
-    };
+      setError(null);
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch mystery boxes.');
+    } finally {
+      // Chỉ tắt loading lần đầu
+      if (loading) setLoading(false);
+    }
+  }, [loading]); // Thêm 'loading' để hàm chỉ được tạo lại khi cần
 
-    fetchBoxes();
-  }, []); // Mảng rỗng đảm bảo useEffect chỉ chạy 1 lần
+  useFocusEffect(
+    useCallback(() => {
+      fetchBoxes();
+    }, [fetchBoxes])
+  );
 
   // THÊM MỚI: Tự động tạo danh sách collection từ dữ liệu API
   const collections = useMemo(() => {

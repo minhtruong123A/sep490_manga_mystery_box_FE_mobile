@@ -10,24 +10,45 @@ import {
   Alert,
   ActivityIndicator, // Thêm ActivityIndicator
 } from 'react-native';
-import { ShopStackScreenProps } from '../types/types';
+import ApiImage from '../components/ApiImage'; // THÊM MỚI
+import { ShopStackScreenProps, MysteryBoxDetailItem, RootStackNavigationProp } from '../types/types';
 // THÊM MỚI: Import API function và định nghĩa kiểu dữ liệu
-import { getMysteryBoxDetail } from '../services/api.mysterybox';
-import { MysteryBoxDetailItem } from '../types/types';
+import { getMysteryBoxDetail, buyMysteryBox } from '../services/api.mysterybox';
 import { buildImageUrl } from '../services/api.imageproxy';
+import { addToCart } from '../services/api.cart'; // THÊM MỚI
+import CartIconOutline from '../../assets/icons/cart_outline.svg'; // THÊM MỚI
+import { useNavigation } from '@react-navigation/native';
+
+
+// THÊM MỚI: Component QuantitySelector
+const QuantitySelector = ({ quantity, onDecrease, onIncrease }: { quantity: number, onDecrease: () => void, onIncrease: () => void }) => (
+  <View style={styles.quantityContainer}>
+    <TouchableOpacity onPress={onDecrease} style={styles.quantityButton}>
+      <Text style={styles.quantityButtonText}>-</Text>
+    </TouchableOpacity>
+    <Text style={styles.quantityText}>{quantity}</Text>
+    <TouchableOpacity onPress={onIncrease} style={styles.quantityButton}>
+      <Text style={styles.quantityButtonText}>+</Text>
+    </TouchableOpacity>
+  </View>
+);
 
 export default function BoxDetail({ route }: ShopStackScreenProps<'Box Detail'>) {
+  const navigation = useNavigation<RootStackNavigationProp>();
   const { boxId } = route.params;
 
   // THÊM MỚI: State để lưu chi tiết box, loading và error
   const [box, setBox] = useState<MysteryBoxDetailItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   const [useBackup, setUseBackup] = useState(false);
   const [imageLoadFailed, setImageLoadFailed] = useState(false);
-
   const avatarUri = box ? buildImageUrl(box.urlImage, useBackup) : null;
+
+  // THÊM MỚI: State cho các hành động
+  const [quantity, setQuantity] = useState(1);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [isBuyingNow, setIsBuyingNow] = useState(false);
 
   // THÊM MỚI: useEffect để gọi API chi tiết sản phẩm
   useEffect(() => {
@@ -59,6 +80,52 @@ export default function BoxDetail({ route }: ShopStackScreenProps<'Box Detail'>)
     fetchDetail();
   }, [boxId]); // Phụ thuộc vào boxId, sẽ chạy lại nếu boxId thay đổi
 
+  // --- Handlers ---
+  const handleAddToCart = async () => {
+    if (isAddingToCart || !box) return;
+    setIsAddingToCart(true);
+    try {
+      const response = await addToCart({ sellProductId: "", mangaBoxId: box.id, quantity });
+      if (response.status) {
+        Alert.alert("Success", `${box.mysteryBoxName} (x${quantity}) has been added to your cart.`);
+      } else {
+        throw new Error(response.error || "Failed to add to cart.");
+      }
+    } catch (err: any) {
+      Alert.alert("Error", err.message || "An error occurred.");
+    } finally {
+      setIsAddingToCart(false);
+    }
+  };
+
+  const handleBuyNow = async () => {
+    if (isBuyingNow || !box) return;
+    setIsBuyingNow(true);
+    try {
+      const response = await buyMysteryBox({ mangaBoxId: box.id, quantity });
+      if (response.status) {
+        Alert.alert("Purchase Successful!", "Thank you for your purchase. Check your collection for new items.");
+        navigation.navigate('OrderHistory');
+      } else {
+        throw new Error(response.error || "Failed to complete purchase.");
+      }
+    } catch (err: any) {
+      Alert.alert("Purchase Failed", err.message || "An error occurred.");
+    } finally {
+      setIsBuyingNow(false);
+    }
+  };
+
+  // SỬA LỖI 1: Tách hàm xử lý tăng số lượng để thêm logic giới hạn
+  const handleIncreaseQuantity = () => {
+    if (quantity >= 10) {
+      Alert.alert("Limit Reached", "You can only purchase up to 10 boxes.");
+      return;
+    }
+    setQuantity(q => q + 1);
+  };
+
+  // --- Render Logic ---
   // THÊM MỚI: Xử lý giao diện khi đang tải hoặc có lỗi
   if (loading) {
     return (
@@ -84,23 +151,8 @@ export default function BoxDetail({ route }: ShopStackScreenProps<'Box Detail'>)
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Sử dụng urlImage */}
-        <Image
-          source={
-            imageLoadFailed || !avatarUri
-              ? require('../../assets/logo.png')
-              : { uri: avatarUri }
-          }
-          style={styles.mainImage} // hoặc styles.avatar nếu bạn dùng kiểu avatar
-          onError={() => {
-            if (!useBackup) {
-              console.log("Ảnh trên server chính lỗi, chuyển sang backup server");
-              setUseBackup(true);
-            } else {
-              console.log("Ảnh trên server backup cũng lỗi, dùng ảnh local");
-              setImageLoadFailed(true);
-            }
-          }}
-        />
+        <ApiImage urlPath={box.urlImage} style={styles.mainImage} />
+
         <View style={styles.infoContainer}>
           {/* Sử dụng collectionTopic */}
           <Text style={styles.collectionText}>Collection: {box.collectionTopic}</Text>
@@ -112,6 +164,16 @@ export default function BoxDetail({ route }: ShopStackScreenProps<'Box Detail'>)
           <Text style={styles.priceText}>
             {box.mysteryBoxPrice.toLocaleString('vi-VN')} đ
           </Text>
+
+          {/* THÊM MỚI: Bộ chọn số lượng */}
+          <View style={styles.quantitySection}>
+            <Text style={styles.quantityLabel}>Quantity</Text>
+            <QuantitySelector
+              quantity={quantity}
+              onDecrease={() => setQuantity(q => Math.max(1, q - 1))}
+              onIncrease={handleIncreaseQuantity}
+            />
+          </View>
 
           <View style={styles.divider} />
 
@@ -134,12 +196,30 @@ export default function BoxDetail({ route }: ShopStackScreenProps<'Box Detail'>)
         </View>
       </ScrollView>
 
+      {/* CẬP NHẬT: Footer mới với 2 nút */}
       <View style={styles.footer}>
+        <View style={styles.leftActions}>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={handleAddToCart}
+            disabled={isAddingToCart || isBuyingNow}
+          >
+            {isAddingToCart ?
+              <ActivityIndicator size="small" color="#d9534f" /> :
+              <CartIconOutline width={24} height={24} />
+            }
+            <Text style={styles.iconButtonText}>Add to Cart</Text>
+          </TouchableOpacity>
+        </View>
         <TouchableOpacity
-          style={styles.buyButton}
-          onPress={() => Alert.alert('Notice', 'Chức năng đang được phát triển!')}
+          style={[styles.buyButton, (isBuyingNow || isAddingToCart) && styles.disabledButton]}
+          onPress={handleBuyNow}
+          disabled={isBuyingNow || isAddingToCart}
         >
-          <Text style={styles.buyButtonText}>Buy now</Text>
+          {isBuyingNow ?
+            <ActivityIndicator color="#fff" /> :
+            <Text style={styles.buyButtonText}>Buy now</Text>
+          }
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -224,26 +304,86 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     marginLeft: 10,
   },
+  // footer: {
+  //   position: 'absolute',
+  //   bottom: 0,
+  //   left: 0,
+  //   right: 0,
+  //   padding: 16,
+  //   backgroundColor: '#fff',
+  //   borderTopWidth: 1,
+  //   borderTopColor: '#eee',
+  // },
+  // buyButton: {
+  //   backgroundColor: '#d9534f',
+  //   paddingVertical: 16,
+  //   borderRadius: 12,
+  //   alignItems: 'center',
+  //   justifyContent: 'center',
+  // },
+  // buyButtonText: {
+  //   fontSize: 18,
+  //   fontFamily: 'Oxanium-Bold',
+  //   color: '#fff',
+  // },
   footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 16,
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
+    position: 'absolute', bottom: 0, left: 0, right: 0,
+    padding: 16, backgroundColor: '#fff',
+    borderTopWidth: 1, borderTopColor: '#eee',
+    flexDirection: 'row', alignItems: 'center',
+  },
+  leftActions: {
+    flexDirection: 'row',
+  },
+  iconButton: {
+    alignItems: 'center', justifyContent: 'center',
+    paddingHorizontal: 12,
+  },
+  iconButtonText: {
+    fontSize: 12, fontFamily: 'Oxanium-Regular',
+    color: '#666', marginTop: 2,
   },
   buyButton: {
-    backgroundColor: '#d9534f',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
+    flex: 1, backgroundColor: '#d9534f',
+    paddingVertical: 14, borderRadius: 12,
+    alignItems: 'center', justifyContent: 'center',
+    marginLeft: 12,
   },
   buyButtonText: {
+    fontSize: 18, fontFamily: 'Oxanium-Bold', color: '#fff'
+  },
+  disabledButton: {
+    backgroundColor: '#ccc',
+  },
+  quantitySection: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginVertical: 16,
+  },
+  quantityLabel: {
+    fontSize: 18,
+    fontFamily: 'Oxanium-SemiBold',
+    color: '#333',
+  },
+  quantityContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0f2f5',
+    borderRadius: 8,
+  },
+  quantityButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  quantityButtonText: {
+    fontSize: 20,
+    fontFamily: 'Oxanium-Bold',
+    color: '#333',
+  },
+  quantityText: {
+    paddingHorizontal: 12,
     fontSize: 18,
     fontFamily: 'Oxanium-Bold',
-    color: '#fff',
   },
 });

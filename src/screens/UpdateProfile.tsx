@@ -12,7 +12,9 @@ import {
   Alert,
   Modal,
   FlatList,
-  Pressable
+  Pressable,
+  KeyboardAvoidingView,
+  Platform
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
@@ -178,104 +180,110 @@ export default function UpdateProfile() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.container}>
-        {/* Phần Avatar */}
-        <View style={styles.avatarSection}>
-          <Image
-            source={
-              imageLoadFailed || !avatarUri
-                ? require('../../assets/logo.png')
-                : { uri: avatarUri }
-            }
-            style={styles.avatar}
-            onError={() => {
-              if (!useBackup) {
-                console.log("Ảnh trên server chính lỗi, chuyển sang backup server");
-                setUseBackup(true);
-              } else {
-                console.log("Ảnh trên server backup cũng lỗi, dùng ảnh local");
-                setImageLoadFailed(true);
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={40}
+      >
+        <ScrollView contentContainerStyle={styles.container}>
+          {/* Phần Avatar */}
+          <View style={styles.avatarSection}>
+            <Image
+              source={
+                imageLoadFailed || !avatarUri
+                  ? require('../../assets/logo.png')
+                  : { uri: avatarUri }
               }
-            }}
-          />
-          <TouchableOpacity style={styles.changeAvatarButton} onPress={pickImage}>
-            <Text style={styles.changeAvatarText}>Change Avatar</Text>
+              style={styles.avatar}
+              onError={() => {
+                if (!useBackup) {
+                  console.log("Ảnh trên server chính lỗi, chuyển sang backup server");
+                  setUseBackup(true);
+                } else {
+                  console.log("Ảnh trên server backup cũng lỗi, dùng ảnh local");
+                  setImageLoadFailed(true);
+                }
+              }}
+            />
+            <TouchableOpacity style={styles.changeAvatarButton} onPress={pickImage}>
+              <Text style={styles.changeAvatarText}>Change Avatar</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Phần Form */}
+          <View style={styles.formSection}>
+            <Text style={styles.label}>Username</Text>
+            <TextInput style={[styles.input, styles.disabledInput]} value={profile?.username} editable={false} />
+
+            <Text style={styles.label}>Email</Text>
+            <TextInput style={[styles.input, styles.disabledInput]} value={profile?.email} editable={false} />
+
+            <Text style={styles.label}>Phone Number</Text>
+            <TextInput
+              style={styles.input}
+              value={form.phoneNumber}
+              onChangeText={(text) => setForm({ ...form, phoneNumber: text })}
+              placeholder="Enter phone number"
+              keyboardType="phone-pad"
+            />
+
+            <Text style={styles.label}>Bank</Text>
+            <TouchableOpacity style={styles.input} onPress={() => setBankModalVisible(true)}>
+              <Text style={styles.bankText}>{selectedBank ? selectedBank.short_name : 'Select a bank'}</Text>
+            </TouchableOpacity>
+
+            {form.bankid && (
+              <>
+                <Text style={styles.label}>Account Name</Text>
+                <TextInput
+                  style={styles.input}
+                  value={form.accountBankName}
+                  onChangeText={(text) => setForm({ ...form, accountBankName: text })}
+                  placeholder="Enter account holder name"
+                />
+                <Text style={styles.label}>Account Number</Text>
+                <TextInput
+                  style={styles.input}
+                  value={form.bankNumber}
+                  onChangeText={(text) => setForm({ ...form, bankNumber: text })}
+                  placeholder="Enter account number"
+                  keyboardType="number-pad"
+                />
+              </>
+            )}
+          </View>
+
+          <TouchableOpacity style={styles.saveButton} onPress={handleSubmit} disabled={isSubmitting}>
+            {isSubmitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveButtonText}>Save Changes</Text>}
           </TouchableOpacity>
-        </View>
 
-        {/* Phần Form */}
-        <View style={styles.formSection}>
-          <Text style={styles.label}>Username</Text>
-          <TextInput style={[styles.input, styles.disabledInput]} value={profile?.username} editable={false} />
-
-          <Text style={styles.label}>Email</Text>
-          <TextInput style={[styles.input, styles.disabledInput]} value={profile?.email} editable={false} />
-
-          <Text style={styles.label}>Phone Number</Text>
-          <TextInput
-            style={styles.input}
-            value={form.phoneNumber}
-            onChangeText={(text) => setForm({ ...form, phoneNumber: text })}
-            placeholder="Enter phone number"
-            keyboardType="phone-pad"
-          />
-
-          <Text style={styles.label}>Bank</Text>
-          <TouchableOpacity style={styles.input} onPress={() => setBankModalVisible(true)}>
-            <Text style={styles.bankText}>{selectedBank ? selectedBank.short_name : 'Select a bank'}</Text>
-          </TouchableOpacity>
-
-          {form.bankid && (
-            <>
-              <Text style={styles.label}>Account Name</Text>
-              <TextInput
-                style={styles.input}
-                value={form.accountBankName}
-                onChangeText={(text) => setForm({ ...form, accountBankName: text })}
-                placeholder="Enter account holder name"
-              />
-              <Text style={styles.label}>Account Number</Text>
-              <TextInput
-                style={styles.input}
-                value={form.bankNumber}
-                onChangeText={(text) => setForm({ ...form, bankNumber: text })}
-                placeholder="Enter account number"
-                keyboardType="number-pad"
-              />
-            </>
-          )}
-        </View>
-
-        <TouchableOpacity style={styles.saveButton} onPress={handleSubmit} disabled={isSubmitting}>
-          {isSubmitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveButtonText}>Save Changes</Text>}
-        </TouchableOpacity>
-
-        {/* Modal Chọn Ngân Hàng */}
-        <Modal
-          visible={isBankModalVisible}
-          transparent={true}
-          animationType="slide"
-          onRequestClose={() => setBankModalVisible(false)}
-        >
-          <Pressable style={styles.modalOverlay} onPress={() => setBankModalVisible(false)}>
-            <View style={styles.bankModalContainer}>
-              <FlatList
-                data={bankList}
-                keyExtractor={(item) => item.id.toString()}
-                renderItem={({ item }) => (
-                  <TouchableOpacity style={styles.bankItem} onPress={() => {
-                    setForm({ ...form, bankid: String(item.id) });
-                    setBankModalVisible(false);
-                  }}>
-                    <Image source={{ uri: item.logo }} style={styles.bankLogo} />
-                    <Text style={styles.bankName}>{item.short_name} - {item.name}</Text>
-                  </TouchableOpacity>
-                )}
-              />
-            </View>
-          </Pressable>
-        </Modal>
-      </ScrollView>
+          {/* Modal Chọn Ngân Hàng */}
+          <Modal
+            visible={isBankModalVisible}
+            transparent={true}
+            animationType="slide"
+            onRequestClose={() => setBankModalVisible(false)}
+          >
+            <Pressable style={styles.modalOverlay} onPress={() => setBankModalVisible(false)}>
+              <View style={styles.bankModalContainer}>
+                <FlatList
+                  data={bankList}
+                  keyExtractor={(item) => item.id.toString()}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity style={styles.bankItem} onPress={() => {
+                      setForm({ ...form, bankid: String(item.id) });
+                      setBankModalVisible(false);
+                    }}>
+                      <Image source={{ uri: item.logo }} style={styles.bankLogo} />
+                      <Text style={styles.bankName}>{item.short_name} - {item.name}</Text>
+                    </TouchableOpacity>
+                  )}
+                />
+              </View>
+            </Pressable>
+          </Modal>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

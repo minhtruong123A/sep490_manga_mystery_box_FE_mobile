@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   StyleSheet, Text, View, FlatList, SafeAreaView, ActivityIndicator,
 } from 'react-native';
@@ -7,6 +7,7 @@ import FilterBar from '../components/FilterBar';
 import { getAllProductsOnSale } from '../services/api.product'; // Import API sản phẩm
 import { ProductOnSaleItem } from '../types/types';
 import ProductItem from '../components/ProductItem'; // Ta sẽ tạo component này
+import { useFocusEffect } from '@react-navigation/native'; // Thêm useFocusEffect
 
 const priceFilters = ['Price (Low to High)', 'Price (High to Low)'];
 const rarityFilters = ['All', 'Common', 'Uncommon', 'Rare', 'Epic', 'Legendary'];
@@ -21,29 +22,57 @@ export default function CollectionStore({ navigation }: ShopTopTabScreenProps<'C
   const [activePriceSort, setActivePriceSort] = useState<string | null>(null);
   const [activeRarity, setActiveRarity] = useState('All'); // <-- THÊM MỚI
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setLoading(true);
-        const response = await getAllProductsOnSale();
-        if (response.status && Array.isArray(response.data)) {
-          // LỌC THEO YÊU CẦU: quantity > 0 VÀ isSell = true
-          const availableProducts = response.data.filter(
-            (p: ProductOnSaleItem) => p.quantity > 0 && p.isSell
-          );
-          setProducts(availableProducts);
-        } else {
-          throw new Error('Invalid data format received from API');
-        }
-        setError(null);
-      } catch (err: any) {
-        setError(err.message || 'Failed to fetch products.');
-      } finally {
-        setLoading(false);
+  // useEffect(() => {
+  //   const fetchProducts = async () => {
+  //     try {
+  //       setLoading(true);
+  //       const response = await getAllProductsOnSale();
+  //       if (response.status && Array.isArray(response.data)) {
+  //         // LỌC THEO YÊU CẦU: quantity > 0 VÀ isSell = true
+  //         const availableProducts = response.data.filter(
+  //           (p: ProductOnSaleItem) => p.quantity > 0 && p.isSell
+  //         );
+  //         setProducts(availableProducts);
+  //       } else {
+  //         throw new Error('Invalid data format received from API');
+  //       }
+  //       setError(null);
+  //     } catch (err: any) {
+  //       setError(err.message || 'Failed to fetch products.');
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+  //   fetchProducts();
+  // }, []);
+
+  const fetchProducts = useCallback(async () => {
+    try {
+      // Không set loading lại mỗi lần focus để tránh giật UI
+      const response = await getAllProductsOnSale();
+      if (response.status && Array.isArray(response.data)) {
+        // LỌC THEO YÊU CẦU: quantity > 0 VÀ isSell = true
+        const availableProducts = response.data.filter(
+          (p: ProductOnSaleItem) => p.quantity > 0 && p.isSell
+        );
+        setProducts(availableProducts);
+      } else {
+        throw new Error('Invalid data format received from API');
       }
-    };
-    fetchProducts();
-  }, []);
+      setError(null);
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch products.');
+    } finally {
+      // Chỉ tắt loading lần đầu
+      if (loading) setLoading(false);
+    }
+  }, [loading]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchProducts();
+    }, [fetchProducts])
+  );
 
   const topics = useMemo(() => {
     const uniqueTopics = new Set(products.map(item => item.topic));
