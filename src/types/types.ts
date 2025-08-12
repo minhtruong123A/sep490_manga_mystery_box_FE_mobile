@@ -5,6 +5,7 @@ import type { CompositeScreenProps, NavigatorScreenParams } from '@react-navigat
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { MaterialTopTabScreenProps } from '@react-navigation/material-top-tabs';
 import type { MaterialTopTabNavigationProp } from '@react-navigation/material-top-tabs';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'; // Đảm bảo bạn đã import dòng này
 
 export type AuthTabNavigationProp = MaterialTopTabNavigationProp<AuthStackParamList>;
 
@@ -13,6 +14,9 @@ export type AuthStackParamList = {
     Login: undefined;
     Register: undefined;
 };
+
+// THÊM DÒNG NÀY VÀO
+export type AppNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 // Top Tab in Shop
 export type ShopTopTabParamList = {
@@ -359,4 +363,17 @@ export type AuctionDetailData = {
     productImageUrl: string | null;
     productRarity: string;
     description: string;
+    sellerUsername: string;
+    sellerProfileImage: string | null;
+    auctionSessionId: string; // Thêm session id để dùng cho các API python
+};
+
+// --- THÊM MỚI: TYPES CHO BID HISTORY ---
+// Giả định cấu trúc dựa trên nhu cầu hiển thị
+export type BidHistoryItem = {
+    _id: string; // ID của lượt bid
+    user_id: string;
+    username: string;
+    price: number;
+    created_at: string; // ISO date string
 };

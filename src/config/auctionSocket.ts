@@ -1,25 +1,64 @@
-// auctionSocket.js
-// ES module export. Usage: import AuctionSocket from './auctionSocket.js';
+// src/services/auctionSocket.ts
+
+// THÊM MỚI: Định nghĩa interface cho các tùy chọn của constructor
+interface AuctionSocketOptions {
+    urlBase: string; // Bắt buộc phải có
+    token: string;
+    auctionId: string;
+    reconnect?: boolean;
+    reconnectBase?: number;
+    reconnectMax?: number;
+    maxRetries?: number;
+    heartbeatInterval?: number;
+    heartbeatMsg?: string | object;
+    debug?: boolean;
+}
 
 export default class AuctionSocket {
-    /**
-     * options:
-     *  - urlBase: string (ví dụ "wss://api.example.com" hoặc "https://api.example.com")
-     *  - token: string (JWT)
-     *  - auctionId: string
-     *  - reconnect: boolean (default: true)
-     *  - reconnectBase: number ms (default: 1000)
-     *  - reconnectMax: number ms (default: 30000)
-     *  - maxRetries: number (default: Infinity)
-     *  - heartbeatInterval: number ms (default: 0 => disabled)
-     *  - heartbeatMsg: string|object (default: "ping")
-     *  - debug: boolean
-     */
-    constructor({ urlBase = null, token, auctionId, reconnect = true, reconnectBase = 1000, reconnectMax = 30000, maxRetries = Infinity, heartbeatInterval = 0, heartbeatMsg = "ping", debug = false } = {}) {
+    // Khai báo kiểu dữ liệu cho các thuộc tính của class
+    private ws: WebSocket | null;
+    private urlBase: string;
+    private token: string;
+    private auctionId: string;
+    private reconnect: boolean;
+    private reconnectBase: number;
+    private reconnectMax: number;
+    private maxRetries: number;
+    private heartbeatInterval: number;
+    private heartbeatMsg: string | object;
+    private debug: boolean;
+
+    private forcedClose: boolean;
+    private retryCount: number;
+    private reconnectTimer: NodeJS.Timeout | null;
+    private heartbeatTimer: NodeJS.Timeout | null;
+
+    // Các hàm callback
+    public onopen: (ev: Event) => void;
+    public onmessage: (payload: any, ev: MessageEvent) => void;
+    public onclose: (ev: CloseEvent) => void;
+    public onerror: (ev: Event | Error) => void;
+    public onauthfail: (code: number, reason: string) => void;
+
+    constructor({
+        urlBase,
+        token,
+        auctionId,
+        reconnect = true,
+        reconnectBase = 1000,
+        reconnectMax = 30000,
+        maxRetries = Infinity,
+        heartbeatInterval = 0,
+        heartbeatMsg = "ping",
+        debug = false
+    }: AuctionSocketOptions) {
         if (!auctionId) throw new Error("auctionId is required");
+        if (!urlBase) throw new Error("urlBase is required for React Native environment");
+
+        // SỬA LỖI: Gán giá trị cho TẤT CẢ các thuộc tính đã khai báo
         this.auctionId = auctionId;
         this.token = token || "";
-        this.urlBase = urlBase || this._defaultUrlBase();
+        this.urlBase = urlBase;
         this.reconnect = reconnect;
         this.reconnectBase = reconnectBase;
         this.reconnectMax = reconnectMax;
@@ -34,43 +73,33 @@ export default class AuctionSocket {
         this.reconnectTimer = null;
         this.heartbeatTimer = null;
 
-        // Event callbacks (override externally)
+        // Gán giá trị mặc định cho callbacks
         this.onopen = () => { };
-        this.onmessage = (msg) => { };
-        this.onclose = (ev) => { };
-        this.onerror = (err) => { };
-        this.onauthfail = (code, reason) => { }; // called when 4401 or 1008
+        this.onmessage = () => { };
+        this.onclose = () => { };
+        this.onerror = () => { };
+        this.onauthfail = () => { };
 
-        // Auto connect on construction:
         this.connect();
     }
 
-    _log(...args) {
+    // SỬA LỖI: Thêm kiểu 'any[]' cho args
+    private _log(...args: any[]) {
         if (this.debug) console.log("[AuctionSocket]", ...args);
     }
 
-    _defaultUrlBase() {
-        // If no urlBase provided, assume same host as page
-        // convert http(s) to ws(s)
-        const loc = window.location;
-        const protocol = loc.protocol === "https:" ? "wss:" : "ws:";
-        return `${protocol}//${loc.host}`;
-    }
-
-    _buildUrl() {
-        // Ensure urlBase uses ws/wss scheme
+    private _buildUrl(): string {
         let base = this.urlBase;
         base = base.replace(/^http:\/\//i, "ws://").replace(/^https:\/\//i, "wss://");
-        // Build endpoint path exactly like your FastAPI router
         const path = `/websocket/auction/${encodeURIComponent(this.auctionId)}`;
-        const sep = base.endsWith("/") ? "" : "";
+        const sep = base.endsWith("/") ? "" : "/";
         const tokenParam = `token=${encodeURIComponent(this.token || "")}`;
         return `${base}${sep}${path}?${tokenParam}`;
     }
 
-    connect() {
+    public connect(): void {
         if (!this.token) {
-            this._log("No token set. Attempting connection without token (server may reject).");
+            this._log("No token set. Attempting connection without token.");
         }
 
         this.forcedClose = false;
@@ -84,42 +113,31 @@ export default class AuctionSocket {
                 this._log("onopen", ev);
                 this.retryCount = 0;
                 this._clearReconnectTimer();
-
-                // Start heartbeat only if enabled (default disabled)
                 if (this.heartbeatInterval > 0) {
                     this._startHeartbeat();
                 }
-
-                try { this.onopen(ev); } catch (e) { console.error(e); }
+                try { this.onopen(ev as Event); } catch (e) { console.error(e); }
             };
 
             this.ws.onmessage = (ev) => {
-                // Try to parse JSON, fallback to text
-                let payload = ev.data;
+                let payload: any = ev.data;
                 try {
                     payload = JSON.parse(ev.data);
                 } catch (e) {
                     // keep raw text
                 }
-                try { this.onmessage(payload, ev); } catch (e) { console.error(e); }
+                try { this.onmessage(payload, ev as MessageEvent); } catch (e) { console.error(e); }
             };
 
             this.ws.onclose = (ev) => {
                 this._log("onclose", ev);
                 this._stopHeartbeat();
-
-                // Special handling for auth failures from your utils.py:
-                // - 4401: custom "no token"
-                // - 1008: policy violation (you used 1008 for auth fail)
                 if (ev.code === 4401 || ev.code === 1008) {
-                    this._log("Auth failed or unauthorized (code)", ev.code, ev.reason);
+                    this._log("Auth failed (code)", ev.code, ev.reason);
                     try { this.onauthfail(ev.code, ev.reason); } catch (e) { console.error(e); }
-                    // Do not attempt reconnection when auth fails
                     return;
                 }
-
-                try { this.onclose(ev); } catch (e) { console.error(e); }
-
+                try { this.onclose(ev as CloseEvent); } catch (e) { console.error(e); }
                 if (!this.forcedClose && this.reconnect && this.retryCount < this.maxRetries) {
                     this._scheduleReconnect();
                 }
@@ -127,23 +145,20 @@ export default class AuctionSocket {
 
             this.ws.onerror = (ev) => {
                 this._log("onerror", ev);
-                try { this.onerror(ev); } catch (e) { console.error(e); }
-                // Note: 'onerror' often precedes 'onclose' — reconnection is handled in onclose
+                try { this.onerror(ev as Event); } catch (e) { console.error(e); }
             };
         } catch (err) {
             this._log("Connection attempt threw", err);
-            try { this.onerror(err); } catch (e) { console.error(e); }
+            try { this.onerror(err as Error); } catch (e) { console.error(e); }
             this._scheduleReconnect();
         }
     }
 
-    _startHeartbeat() {
+    private _startHeartbeat(): void {
         this._stopHeartbeat();
         if (this.heartbeatInterval > 0) {
             this.heartbeatTimer = setInterval(() => {
                 if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-                    // WARNING: Application-level heartbeat will be broadcast by your server to other clients.
-                    // If you don't want that, keep heartbeatInterval = 0 (disabled).
                     const msg = typeof this.heartbeatMsg === "string" ? this.heartbeatMsg : JSON.stringify(this.heartbeatMsg);
                     this._log("Sending heartbeat", msg);
                     this.ws.send(msg);
@@ -152,20 +167,18 @@ export default class AuctionSocket {
         }
     }
 
-    _stopHeartbeat() {
+    private _stopHeartbeat(): void {
         if (this.heartbeatTimer) {
             clearInterval(this.heartbeatTimer);
             this.heartbeatTimer = null;
         }
     }
 
-    _scheduleReconnect() {
+    private _scheduleReconnect(): void {
         this.retryCount += 1;
         const backoff = Math.min(this.reconnectBase * Math.pow(1.5, this.retryCount - 1), this.reconnectMax);
-        // add jitter +/- 20%
         const jitter = backoff * 0.2 * (Math.random() - 0.5);
         const delay = Math.max(200, Math.floor(backoff + jitter));
-
         this._log(`Reconnect scheduled (#${this.retryCount}) in ${delay}ms`);
         this._clearReconnectTimer();
         this.reconnectTimer = setTimeout(() => {
@@ -174,21 +187,19 @@ export default class AuctionSocket {
         }, delay);
     }
 
-    _clearReconnectTimer() {
+    private _clearReconnectTimer(): void {
         if (this.reconnectTimer) {
             clearTimeout(this.reconnectTimer);
             this.reconnectTimer = null;
         }
     }
 
-    send(data) {
-        // For consistency with your server which uses send_json, prefer sending JSON objects.
+    public send(data: string | object): boolean {
         if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
             this._log("Cannot send, socket not open");
             return false;
         }
         try {
-            // If object -> stringify, if string -> send as-is
             const payload = (typeof data === "object") ? JSON.stringify(data) : data;
             this.ws.send(payload);
             return true;
@@ -198,7 +209,7 @@ export default class AuctionSocket {
         }
     }
 
-    close() {
+    public close(): void {
         this.forcedClose = true;
         this._clearReconnectTimer();
         this._stopHeartbeat();
@@ -207,21 +218,15 @@ export default class AuctionSocket {
         }
     }
 
-    /**
-     * Update token (useful for refresh token flow) and reconnect with the new token.
-     * If wantImmediateReconnect = true -> will close existing and reconnect immediately.
-     */
-    updateToken(newToken, { reconnectImmediate = true } = {}) {
+    public updateToken(newToken: string, { reconnectImmediate = true } = {}): void {
         this.token = newToken;
         this._log("Token updated");
         if (reconnectImmediate) {
             this._log("Reconnecting with new token...");
             this.forcedClose = false;
             if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-                // close current connection to force reconnect with new token
                 try { this.ws.close(); } catch (e) { /* ignore */ }
             } else {
-                // if not open, ensure we start connection
                 this._clearReconnectTimer();
                 this.connect();
             }

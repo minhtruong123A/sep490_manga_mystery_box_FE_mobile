@@ -141,12 +141,52 @@ export const joinAuction = async (auction_id) => {
       url: `/api/auction/join?auction_id=${auction_id}`,
       requiresAuth: true,
     });
+
+    // bảo vệ nếu response undefined hoặc không có data
+    if (!response) {
+      console.warn("joinAuction: no response from pythonApiWithFallback");
+      return {
+        success: false,
+        data: null,
+        length: 0,
+        error: "No response from server",
+        error_code: -1,
+      };
+    }
+
+    // nếu response tồn tại nhưng không có .data, trả về object chuẩn
+    if (response.data == null) {
+      console.warn("joinAuction: response has no .data", response);
+      return {
+        success: false,
+        data: null,
+        length: 0,
+        error: "Malformed response (no data)",
+        error_code: -1,
+      };
+    }
+
+    // bình thường trả về response.data (the API payload)
     return response.data;
   } catch (error) {
     console.error(`Join auction failed (auction_id=${auction_id}):`, error);
-    throw error;
+
+    // nếu server thực sự trả lỗi (axios-like)
+    if (error && error.response && error.response.data) {
+      return error.response.data;
+    }
+
+    // fallback: trả object lỗi thống nhất (không ném)
+    return {
+      success: false,
+      data: null,
+      length: 0,
+      error: error?.message || "Network or unknown error",
+      error_code: error?.response?.status ?? -1,
+    };
   }
 };
+
 
 export const addBidAuction = async (auction_id, ammount) => {
   try {
@@ -162,6 +202,20 @@ export const addBidAuction = async (auction_id, ammount) => {
   }
 };
 
+export const getBidAuction = async (auction_id) => {
+  try {
+    const response = await pythonApiWithFallback({
+      method: "get",
+      url: `/api/auction/bid?auction_id=${auction_id}`,
+      requiresAuth: true,
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Get bid auction failed (auction_id=${auction_id}):`, error);
+    throw error;
+  }
+};
+
 export const confirmAuctionResult = async (auction_id) => {
   try {
     const response = await pythonApiWithFallback({
@@ -171,7 +225,7 @@ export const confirmAuctionResult = async (auction_id) => {
     });
     return response.data;
   } catch (error) {
-    console.error(`Confirm auction result failed (auction_id=${auction_id}):`, error);
+    // console.error(`Confirm auction result failed (auction_id=${auction_id}):`, error);
     throw error;
   }
 };

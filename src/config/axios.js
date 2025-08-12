@@ -115,14 +115,10 @@ function attachInterceptorsTo(instance) {
 // Fallback API cho C# backend
 const apiWithFallback = async (config) => {
   try {
-    return await backupAxios(config);
+    return await primaryAxios(config);
   } catch (err) {
-    // console.warn("[Fallback] C# API failed. Retrying with backup...");
-    // return await backupAxios(config);     return await primaryAxios(config);  
-    if (!err.response || err.response.status >= 500) {
-      // Không có response (network error, timeout...) hoặc lỗi server (status >= 500) => fallback
-      return await backupAxios(config);
-    }
+    console.warn("[Fallback] C# API failed. Retrying with backup...");
+    return await backupAxios(config);
   }
 };
 
@@ -131,15 +127,14 @@ const pythonApiWithFallback = async (config) => {
   try {
     return await pythonAxios(config);
   } catch (err) {
-    // console.warn("[Fallback] Python API failed. Retrying with backup...");     return await backupPythonAxios(config);  
-    if (!err.response || err.response.status >= 500) {
-      // Không có response (network error, timeout...) hoặc lỗi server (status >= 500) => fallback
-      return await backupPythonAxios(config);
-    }
+    console.warn("[Fallback] Python API failed. Retrying with backup...");
+    return await backupPythonAxios(config);
   }
 };
 
-export const api = pythonAxios;
+export const PYTHON_API_BASE_URL = 'https://api.mmb.io.vn/py'
+
+// export const api = PYTHON_API_BASE_URL;
 // Export các instance để dùng trực tiếp nếu cần
 export default primaryAxios; // Dùng mặc định là C#
 export {
@@ -147,5 +142,5 @@ export {
   backupAxios,
   backupPythonAxios,
   apiWithFallback,
-  pythonApiWithFallback,
+  pythonApiWithFallback
 };
