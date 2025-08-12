@@ -157,19 +157,29 @@ export default function OngoingAuctions() {
         );
     };
 
-    const filters = ['started', 'waiting'];
+    const filters = ['started', 'waiting'] as const;
+    type FilterKey = typeof filters[number];
 
-    // chuyển filter sang string để truyền cho FilterBar
-    const activeFilter = filter;
+    const labelMap = {
+        started: 'On Going',
+        waiting: 'Starting Soon',
+    };
+
+    // đảo ngược map để dễ lookup khi người dùng chọn label
+    const keyMap = Object.fromEntries(
+        Object.entries(labelMap).map(([k, v]) => [v, k])
+    ) as Record<string, FilterKey>; // chuyển ngược label -> key
+    const displayFilters = filters.map(k => labelMap[k] ?? k); // ['On Going','Starting Soon']
+    const activeFilterLabel = labelMap[filter];
+
     return (
         <SafeAreaView style={styles.container}>
             <FilterBar
-                filters={filters}
-                activeFilter={activeFilter}
+                filters={displayFilters}
+                activeFilter={activeFilterLabel}
                 onSelectFilter={(selected) => {
-                    if (selected === 'started' || selected === 'waiting') {
-                        setFilter(selected);
-                    }
+                    const key = keyMap[selected] ?? (selected as FilterKey);
+                    setFilter(key);
                 }}
             />
 

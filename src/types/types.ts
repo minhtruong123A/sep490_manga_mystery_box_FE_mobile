@@ -322,3 +322,41 @@ export type CartData = {
     products: CartProductItem[];
     boxes: CartBoxItem[];
 };
+
+// --- THÊM MỚI: TYPES CHO AUCTION DETAIL ---
+
+// Dữ liệu sản phẩm trong phiên đấu giá (từ API python)
+export type AuctionProduct = {
+    _id: string;
+    auction_session_id: string;
+    user_product_id: string;
+    seller_id: string;
+    quantity: number;
+    starting_price: number;
+    current_price: number;
+    status: number;
+};
+
+// Dữ liệu chi tiết của một sản phẩm (từ API get-product)
+export type CollectionDetailItem = {
+    productId: string;
+    name: string;
+    urlImage: string | null;
+    description: string;
+    rarityName: string;
+};
+
+// Dữ liệu tổng hợp để hiển thị trên màn hình
+export type AuctionDetailData = {
+    // Từ AuctionProduct
+    auctionProductId: string;
+    startingPrice: number;
+    currentPrice: number;
+    quantity: number;
+    sellerId: string;
+    // Từ CollectionDetailItem
+    productName: string;
+    productImageUrl: string | null;
+    productRarity: string;
+    description: string;
+};

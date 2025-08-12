@@ -29,9 +29,9 @@ export default function Auction() {
         <TopTab.Screen name="On Going" component={OngoingAuctions} />
         <TopTab.Screen name="My Auction" component={MyAuctions} />
       </TopTab.Navigator>
-      <TouchableOpacity style={styles.fab}>
+      {/* <TouchableOpacity style={styles.fab}>
         <AddIcon />
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </View>
   );
 }

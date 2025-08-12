@@ -90,7 +90,25 @@ export default function FavoriteProducts({ products, refreshCart }: { products: 
         }
     }, [products]);
 
+    useEffect(() => {
+        if (favoriteIds.size === 0 || selectedItems.size === 0) return;
+        const newSelected = new Map(selectedItems);
+        let changed = false;
+        for (const id of Array.from(newSelected.keys())) {
+            if (favoriteIds.has(id)) {
+                newSelected.delete(id);
+                changed = true;
+            }
+        }
+        if (changed) setSelectedItems(newSelected);
+    }, [favoriteIds]);
 
+    const selectableItems = useMemo(
+        () => cartProducts.filter(item => !favoriteIds.has(item.sellProductId)),
+        [cartProducts, favoriteIds]
+    );
+
+    const selectableCount = selectableItems.length;
     // --- CÁC HÀM XỬ LÝ SỰ KIỆN ---
 
     // THÊM MỚI: Hàm xử lý toggle yêu thích
@@ -106,6 +124,8 @@ export default function FavoriteProducts({ products, refreshCart }: { products: 
     };
 
     const handleToggleSelection = (item: CartProductItem) => {
+        if (favoriteIds.has(item.sellProductId)) return;
+
         const newSelected = new Map(selectedItems);
         if (newSelected.has(item.sellProductId)) {
             newSelected.delete(item.sellProductId);
@@ -237,10 +257,10 @@ export default function FavoriteProducts({ products, refreshCart }: { products: 
     };
 
     const handleToggleSelectAll = () => {
-        if (selectedItems.size === cartProducts.length) {
+        if (selectedItems.size === selectableCount && selectableCount > 0) {
             setSelectedItems(new Map());
         } else {
-            const allSelected = new Map(cartProducts.map(p => [p.sellProductId, p.quantity]));
+            const allSelected = new Map(selectableItems.map(p => [p.sellProductId, p.quantity]));
             setSelectedItems(allSelected);
         }
     };
@@ -317,13 +337,20 @@ export default function FavoriteProducts({ products, refreshCart }: { products: 
             />
             <View style={styles.footer}>
                 <View style={styles.footerTopRow}>
-                    <View style={styles.selectAllContainer}>
-                        <Checkbox
-                            isChecked={cartProducts.length > 0 && selectedItems.size === cartProducts.length}
-                            onPress={handleToggleSelectAll}
-                        />
-                        <Text style={styles.selectAllText}>All ({selectedItems.size})</Text>
-                    </View>
+                    {selectableCount > 0 ? (
+                        <View style={styles.selectAllContainer}>
+                            <Checkbox
+                                isChecked={selectableCount > 0 && selectedItems.size === selectableCount}
+                                onPress={handleToggleSelectAll}
+                            />
+                            <Text style={styles.selectAllText}>All ({selectableCount})</Text>
+                        </View>
+                    ) : (
+                        // Nếu không có selectable items (tức tất cả đều favorite) thì ẩn select all và hiển thị một text nhẹ
+                        <View style={styles.selectAllContainer}>
+                            <Text style={[styles.selectAllText, { color: '#888' }]}></Text>
+                        </View>
+                    )}
                     <TouchableOpacity onPress={handleDeleteSelected}>
                         <Text style={styles.deleteButtonText}>Delete</Text>
                     </TouchableOpacity>

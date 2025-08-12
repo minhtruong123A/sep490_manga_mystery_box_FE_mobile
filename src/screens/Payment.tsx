@@ -154,7 +154,7 @@ export default function Payment() {
                 }
 
                 if (Array.isArray(transactionData)) {
-                    setTransactions(transactionData);
+                    setTransactions([...transactionData].reverse());
                 }
 
                 setError(null);

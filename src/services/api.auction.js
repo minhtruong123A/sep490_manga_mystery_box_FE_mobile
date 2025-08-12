@@ -30,8 +30,6 @@ export const updateStatusAuction = async (id, status) => {
   }
 }
 
-
-
 export const fetchAuctionList = async (filter = "started") => {
   try {
     const response = await pythonApiWithFallback({
@@ -45,6 +43,21 @@ export const fetchAuctionList = async (filter = "started") => {
     throw error;
   }
 };
+
+export const fetchAuctionProduct = async (auction_id) => {
+  try {
+    const response = await pythonApiWithFallback({
+      method: "get",
+      url: `/api/auction/product?auction_id=${auction_id}`,
+      requiresAuth: true,
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Fetch auction product failed (auction_id=${auction_id}):`, error);
+    throw error;
+  }
+};
+
 export const fetchAuctionListStart = async () => {
   try {
     const response = await pythonApiWithFallback({
@@ -117,6 +130,62 @@ export const productOfAuction = async (productData) => {
     return response.data;
   } catch (error) {
     console.error("Add product to auction failed:", error);
+    throw error;
+  }
+};
+//---------------------------------------------------------------------------
+export const joinAuction = async (auction_id) => {
+  try {
+    const response = await pythonApiWithFallback({
+      method: "post",
+      url: `/api/auction/join?auction_id=${auction_id}`,
+      requiresAuth: true,
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Join auction failed (auction_id=${auction_id}):`, error);
+    throw error;
+  }
+};
+
+export const addBidAuction = async (auction_id, ammount) => {
+  try {
+    const response = await pythonApiWithFallback({
+      method: "post",
+      url: `/api/auction/bid?auction_id=${auction_id}&ammount=${ammount}`,
+      requiresAuth: true,
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Add bid failed (auction_id=${auction_id}, ammount=${ammount}):`, error);
+    throw error;
+  }
+};
+
+export const confirmAuctionResult = async (auction_id) => {
+  try {
+    const response = await pythonApiWithFallback({
+      method: "post",
+      url: `/api/auction/confirmation?auction_id=${auction_id}`,
+      requiresAuth: true,
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Confirm auction result failed (auction_id=${auction_id}):`, error);
+    throw error;
+  }
+};
+
+export const checkIsJoinedAuction = async () => {
+  try {
+    const response = await pythonApiWithFallback({
+      method: "get",
+      url: `/api/auction/is-joined-auction`,
+      requiresAuth: true,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Check is joined auction failed:", error);
     throw error;
   }
 };
