@@ -1,11 +1,16 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ActivityIndicator, FlatList, TouchableOpacity } from 'react-native';
-import ApiImage from '../components/ApiImage';
-import { fetchMyAuctionList } from '../services/api.auction';
-import { getOtherProfile } from '../services/api.user';
-import { UserProfile } from '../types/types';
-import { useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
+// --- Types, APIs, Components ---
+import { UserProfile, AppNavigationProp } from '../types/types'; // Import các type cần thiết
+import { fetchMyAuctionList, GetJoinedHistoryAuction } from '../services/api.auction'; // Import cả 2 API
+import { getOtherProfile } from '../services/api.user';
+import ApiImage from '../components/ApiImage';
+import FilterBar from '../components/FilterBar';
+
+// --- Type Definitions ---
+// Giữ nguyên các type này để component hiểu cấu trúc dữ liệu
 type AuctionItem = {
     _id: string;
     title: string;
@@ -13,24 +18,66 @@ type AuctionItem = {
     start_time: string;
     end_time: string;
     seller_id: string;
-    status: number;
-    productImageUrl?: string; // nếu API có
+    status: number; // 0: Pending, 1: Approved/Ongoing, -1: Denied
+    productImageUrl?: string;
 };
 
-export default function MyAuctions({ navigation }: any) {
-    const [auctions, setAuctions] = useState<(AuctionItem & { seller: UserProfile | null })[]>([]);
+type AuctionWithSeller = AuctionItem & {
+    seller: UserProfile | null;
+};
+
+// --- Helper Functions ---
+const formatTimeLeft = (endTime: string) => {
+    const timeLeft = Math.max(0, new Date(endTime).getTime() - new Date().getTime());
+    if (timeLeft === 0) return "Ended";
+    const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+    const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+    return `Ends in: ${hours}h ${minutes}m`;
+};
+
+const getStatusInfo = (item: AuctionItem): { text: string, color: string } => {
+    const now = new Date();
+    const startTime = new Date(item.start_time);
+    const endTime = new Date(item.end_time);
+
+    switch (item.status) {
+        case 0:
+            return { text: `Pending (Starts ${startTime.toLocaleDateString()})`, color: '#ffc107' };
+        case 1:
+            if (now > endTime) return { text: 'Ended', color: '#6c757d' };
+            if (now < startTime) return { text: `Starts in...`, color: '#17a2b8' };
+            return { text: formatTimeLeft(item.end_time), color: '#28a745' };
+        case -1:
+            return { text: 'Denied', color: '#dc3545' };
+        default:
+            return { text: 'Unknown', color: '#6c757d' };
+    }
+};
+
+// --- Main Component ---
+export default function MyAuctions() {
+    const navigation = useNavigation<AppNavigationProp>();
+
+    // --- State Management ---
+    const [auctions, setAuctions] = useState<AuctionWithSeller[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [activeFilter, setActiveFilter] = useState<'Hosted' | 'My Bids'>('Hosted');
 
+    // --- Data Fetching ---
     const fetchData = useCallback(async () => {
         try {
             setLoading(true);
             setError(null);
 
-            const auctionRes = await fetchMyAuctionList();
+            // Chọn API để gọi dựa trên filter đang hoạt động
+            const apiCall = activeFilter === 'Hosted' ? fetchMyAuctionList() : GetJoinedHistoryAuction();
+            const auctionRes = await apiCall;
+
             if (auctionRes.success && Array.isArray(auctionRes.data)) {
                 const flatAuctions: AuctionItem[] = auctionRes.data.flat();
 
+                // Lấy thông tin người bán cho mỗi phiên đấu giá
                 const auctionsWithSellers = await Promise.all(
                     flatAuctions.map(async (auction) => {
                         try {
@@ -41,108 +88,74 @@ export default function MyAuctions({ navigation }: any) {
                         }
                     })
                 );
-
                 setAuctions(auctionsWithSellers);
             } else {
-                throw new Error('Invalid auction data format');
+                throw new Error(auctionRes.error || 'Invalid auction data format');
             }
         } catch (err: any) {
             setError(err.message || 'Failed to fetch auctions');
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [activeFilter]); // Tải lại dữ liệu mỗi khi activeFilter thay đổi
 
+    // Dùng useFocusEffect để đảm bảo dữ liệu luôn mới nhất khi quay lại tab
     useFocusEffect(
         React.useCallback(() => {
             fetchData();
         }, [fetchData])
     );
+    // --- Render Logic ---
+    const renderItem = ({ item }: { item: AuctionWithSeller }) => {
+        const status = getStatusInfo(item);
+        return (
+            <TouchableOpacity
+                style={styles.itemContainer}
+                onPress={() => navigation.navigate('AuctionDetail', { auctionId: item._id })}
+            >
+                <ApiImage
+                    urlPath={item.productImageUrl || item.seller?.profileImage}
+                    style={styles.itemImage}
+                />
+                <View style={styles.itemInfo}>
+                    <Text style={styles.itemName} numberOfLines={2}>{item.title}</Text>
+                    <Text style={styles.itemDescription} numberOfLines={1}>{item.descripition}</Text>
+                    {item.seller && (
+                        <Text style={styles.sellerName}>by {item.seller.username}</Text>
+                    )}
+                    <Text style={[styles.statusText, { color: status.color }]}>
+                        {status.text}
+                    </Text>
+                </View>
+            </TouchableOpacity>
+        );
+    };
 
     if (loading) {
-        return (
-            <SafeAreaView style={styles.center}>
-                <ActivityIndicator size="large" color="#333" />
-            </SafeAreaView>
-        );
+        return <SafeAreaView style={styles.center}><ActivityIndicator size="large" color="#333" /></SafeAreaView>;
     }
 
     if (error) {
-        return (
-            <SafeAreaView style={styles.center}>
-                <Text style={{ color: 'red' }}>{error}</Text>
-            </SafeAreaView>
-        );
-    }
-
-    if (auctions.length === 0) {
-        return (
-            <SafeAreaView style={styles.center}>
-                <Text>You don't have any auctions yet.</Text>
-            </SafeAreaView>
-        );
+        return <SafeAreaView style={styles.center}><Text style={{ color: 'red' }}>{error}</Text></SafeAreaView>;
     }
 
     return (
         <SafeAreaView style={styles.container}>
+            <FilterBar
+                filters={['Hosted', 'My Bids']}
+                activeFilter={activeFilter}
+                onSelectFilter={(filter) => setActiveFilter(filter as 'Hosted' | 'My Bids')}
+            />
             <FlatList
                 data={auctions}
                 keyExtractor={(item) => item._id}
                 contentContainerStyle={styles.listContent}
-                renderItem={({ item }) => {
-                    let timeDisplay = "";
-                    if (item.status === 0) {
-                        // Đang chờ duyệt
-                        const start = new Date(item.start_time);
-                        timeDisplay = `Scheduled at: ${start.toLocaleString("vi-VN")}`;
-                    } else if (item.status === 1) {
-                        const now = new Date();
-                        const endTime = new Date(item.end_time);
-
-                        if (endTime.getTime() < now.getTime()) {
-                            // Đã kết thúc
-                            timeDisplay = `Ended on: ${endTime.toLocaleString("vi-VN")}`;
-                        } else {
-                            // Đã duyệt, hiển thị countdown
-                            const timeLeft = Math.max(0, new Date(item.end_time).getTime() - new Date().getTime());
-                            const hours = Math.floor(timeLeft / (1000 * 60 * 60));
-                            const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-                            timeDisplay = `Time left: ${hours}h ${minutes}m`;
-                        }
-                    } else if (item.status === -1) {
-                        // Từ chối
-                        timeDisplay = "Denied";
-                    }
-
-                    return (
-                        <TouchableOpacity
-                            style={styles.itemContainer}
-                        // onPress={() => navigation.navigate('AuctionDetail', { auctionId: item._id })}
-                        >
-                            <ApiImage
-                                urlPath={item.productImageUrl || item.seller?.profileImage}
-                                style={styles.itemImage}
-                            />
-                            <View style={styles.itemInfo}>
-                                <Text style={styles.itemName} numberOfLines={2}>
-                                    {item.title}
-                                </Text>
-                                <Text style={styles.itemDescription} numberOfLines={2}>
-                                    {item.descripition}
-                                </Text>
-                                {item.seller && (
-                                    <Text style={styles.sellerName}>by {item.seller.username}</Text>
-                                )}
-                                <Text style={[
-                                    styles.timeLeft,
-                                    item.status === -1 && { color: '#888' }
-                                ]}>
-                                    {timeDisplay}
-                                </Text>
-                            </View>
-                        </TouchableOpacity>
-                    );
-                }}
+                renderItem={renderItem}
+                ListEmptyComponent={
+                    <View style={styles.center}>
+                        <Text>No auctions found in this category.</Text>
+                    </View>
+                }
             />
         </SafeAreaView>
     );
@@ -150,7 +163,7 @@ export default function MyAuctions({ navigation }: any) {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#f0f2f5' },
-    listContent: { padding: 16 },
+    listContent: { padding: 16, flexGrow: 1 },
     center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     itemContainer: {
         flexDirection: 'row',
@@ -163,15 +176,15 @@ const styles = StyleSheet.create({
         shadowRadius: 5,
         elevation: 3,
     },
-    itemImage: { width: 100, height: 100, borderRadius: 8, marginRight: 12 },
-    itemInfo: { flex: 1, justifyContent: 'space-between' },
+    itemImage: { width: 100, height: 100, borderRadius: 8, marginRight: 12, backgroundColor: '#eee' },
+    itemInfo: { flex: 1, justifyContent: 'space-around' },
     itemName: { fontFamily: 'Oxanium-Bold', fontSize: 16 },
-    sellerName: { fontFamily: 'Oxanium-Regular', fontSize: 12, color: '#666' },
-    timeLeft: { fontFamily: 'Oxanium-SemiBold', color: '#d9534f', fontSize: 14 },
     itemDescription: {
         fontFamily: 'Oxanium-Regular',
         fontSize: 13,
-        color: '#444',
-        marginTop: 2
+        color: '#666',
+        marginVertical: 4,
     },
+    sellerName: { fontFamily: 'Oxanium-Regular', fontSize: 12, color: '#888' },
+    statusText: { fontFamily: 'Oxanium-Bold', fontSize: 14, marginTop: 4 },
 });

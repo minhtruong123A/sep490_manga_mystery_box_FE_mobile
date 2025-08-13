@@ -161,7 +161,7 @@ export default function OngoingAuctions() {
     type FilterKey = typeof filters[number];
 
     const labelMap = {
-        started: 'On Going',
+        started: 'Live',
         waiting: 'Starting Soon',
     };
 

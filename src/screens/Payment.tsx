@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#fff' },
     centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     balanceContainer: {
-        backgroundColor: '#d9534f',
+        backgroundColor: '#5cb85c',
         padding: 24,
         alignItems: 'center',
     },

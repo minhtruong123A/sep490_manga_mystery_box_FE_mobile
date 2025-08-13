@@ -26,7 +26,7 @@ export default function Auction() {
           tabBarLabelStyle: { fontFamily: 'Oxanium-Bold', textTransform: 'none' },
         }}
       >
-        <TopTab.Screen name="On Going" component={OngoingAuctions} />
+        <TopTab.Screen name="Auctions" component={OngoingAuctions} />
         <TopTab.Screen name="My Auction" component={MyAuctions} />
       </TopTab.Navigator>
       {/* <TouchableOpacity style={styles.fab}>

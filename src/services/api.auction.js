@@ -44,6 +44,20 @@ export const fetchAuctionList = async (filter = "started") => {
   }
 };
 
+export const fetchAuctionAllList = async (filter = "default") => {
+  try {
+    const response = await pythonApiWithFallback({
+      method: "get",
+      url: `/api/auction/all?filter=${filter}`,
+      requiresAuth: true,
+    });
+    return response.data; // mảng 1 chiều
+  } catch (error) {
+    console.error(`Fetch auction list failed (filter=${filter}):`, error);
+    throw error;
+  }
+};
+
 export const fetchAuctionProduct = async (auction_id) => {
   try {
     const response = await pythonApiWithFallback({
@@ -235,6 +249,20 @@ export const checkIsJoinedAuction = async () => {
     const response = await pythonApiWithFallback({
       method: "get",
       url: `/api/auction/is-joined-auction`,
+      requiresAuth: true,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Check is joined auction failed:", error);
+    throw error;
+  }
+};
+
+export const GetJoinedHistoryAuction = async () => {
+  try {
+    const response = await pythonApiWithFallback({
+      method: "get",
+      url: `/api/auction/joined-history`,
       requiresAuth: true,
     });
     return response.data;

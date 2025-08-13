@@ -236,11 +236,12 @@ const styles = StyleSheet.create({
         fontFamily: 'Oxanium-Regular',
     },
     // Icon ẩn/hiện mật khẩu
+
     visibilityIcon: {
         padding: 10,
     },
     button: {
-        backgroundColor: '#5cb85c',
+        backgroundColor: '#d9534f',
         padding: 15,
         borderRadius: 10,
         alignItems: 'center',
