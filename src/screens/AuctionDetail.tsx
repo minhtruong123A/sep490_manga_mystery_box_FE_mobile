@@ -80,7 +80,7 @@ export default function AuctionDetail({ route }: RootStackScreenProps<'AuctionDe
             auctionId: sessionId,
             token: userToken || '',
             debug: true,
-            reconnect: false
+            // reconnect: false
         });
 
         // SỬA LỖI LOGIC HOÀN CHỈNH
