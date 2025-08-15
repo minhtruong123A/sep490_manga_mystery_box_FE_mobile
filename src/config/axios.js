@@ -17,7 +17,7 @@ const primaryAxios = axios.create({
 
 const backupAxios = axios.create({
   baseURL: BACKUP_CS_API,
-  timeout: 10000,
+  // timeout: 10000,
 });
 
 const pythonAxios = axios.create({
@@ -27,7 +27,7 @@ const pythonAxios = axios.create({
 
 const backupPythonAxios = axios.create({
   baseURL: BACKUP_PY_API,
-  timeout: 10000,
+  // timeout: 10000,
 });
 
 export const IMAGE_BASE_URL = `${CS_API}/api/ImageProxy`;
