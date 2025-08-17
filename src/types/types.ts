@@ -45,8 +45,8 @@ export type ShopStackParamList = {
 
 // CẬP NHẬT: Thêm các màn hình Auction
 export type AuctionTopTabParamList = {
-    'Đang diễn ra': undefined;
-    'Của tôi': undefined;
+    Auctions: undefined;
+    'My Auction': undefined;
 };
 
 // CẬP NHẬT: Thêm WithdrawRequest vào PaymentStackParamList
@@ -64,7 +64,7 @@ export type ShoppingCartStackParamList = {
 // Bottom Tab Navigator
 export type RootTabParamList = {
     Shop: NavigatorScreenParams<ShopStackParamList>;
-    Auction: NavigatorScreenParams<AuctionTopTabParamList>; // <-- Thay đổi ở đây
+    Auction: NavigatorScreenParams<AuctionStackParamList> | undefined;
     Payment: NavigatorScreenParams<PaymentStackParamList>;
     Chat: undefined;
 };
@@ -376,4 +376,22 @@ export type BidHistoryItem = {
     username: string;
     price: number;
     created_at: string; // ISO date string
+};
+
+// Auction item
+export type AuctionItem = {
+    _id: string; // API trả về _id, nhưng ta sẽ map nó sang id cho nhất quán
+    id: string;
+    title: string;
+    start_price: number;
+    urlImage?: string; // Giả sử API có ảnh
+    start_time: Date
+    seller_id: string;
+    productImageUrl?: string; // Nếu API có trường này
+    end_time: string;
+};
+
+export type AuctionStackParamList = {
+    AuctionTabs: NavigatorScreenParams<AuctionTopTabParamList>; // Màn hình chính giờ là một navigator chứa các tab
+    AuctionDetail: { auctionId: string };
 };

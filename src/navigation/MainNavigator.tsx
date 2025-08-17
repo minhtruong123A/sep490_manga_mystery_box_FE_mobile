@@ -26,12 +26,15 @@ import Auction from '../screens/Auction';
 import Payment from '../screens/Payment';
 import WithdrawRequest from '../screens/WithdrawRequest';
 import Chat from '../screens/Chat';
+import OngoingAuctions from '../screens/OngoingAuctions'; // Import màn hình danh sách
+import AuctionDetail from '../screens/AuctionDetail';
 
 // Types
 import {
     RootTabParamList,
     ShopStackParamList,
     PaymentStackParamList,
+    AuctionStackParamList
 } from '../types/types';
 
 const Tab = createBottomTabNavigator<RootTabParamList>();
@@ -39,6 +42,22 @@ const ShopStackNav = createNativeStackNavigator<ShopStackParamList>();
 const PaymentStackNav = createNativeStackNavigator<PaymentStackParamList>();
 
 // --- Navigators con ---
+const AuctionStackNav = createNativeStackNavigator<AuctionStackParamList>(); // Dùng type mới
+function AuctionStack() {
+    return (
+        <AuctionStackNav.Navigator screenOptions={{ headerShown: false }}>
+            {/* SỬA Ở ĐÂY:
+                Màn hình chính của Stack này là component Auction.tsx (chứa các tab).
+                Tên "AuctionTabs" phải khớp với tên trong AuctionStackParamList bạn vừa định nghĩa.
+            */}
+            <AuctionStackNav.Screen name="AuctionTabs" component={Auction} />
+
+            {/* Màn hình chi tiết vẫn giữ nguyên */}
+            <AuctionStackNav.Screen name="AuctionDetail" component={AuctionDetail} />
+        </AuctionStackNav.Navigator>
+    );
+}
+
 
 function ShopStack() {
     return (
@@ -89,7 +108,8 @@ export default function MainTabs() {
             })}
         >
             <Tab.Screen name="Shop" component={ShopStack} />
-            <Tab.Screen name="Auction" component={Auction} />
+            {/* <Tab.Screen name="Auction" component={Auction} /> */}
+            <Tab.Screen name="Auction" component={AuctionStack} />
             <Tab.Screen name="Payment" component={PaymentStack} />
             <Tab.Screen name="Chat" component={Chat} />
         </Tab.Navigator>

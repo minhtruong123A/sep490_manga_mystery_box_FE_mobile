@@ -17,6 +17,7 @@ import { CartBoxItem } from '../types/types';
 import { removeFromCart, clearAllCart } from '../services/api.cart'; // API riêng cho box
 import { buyMysteryBox } from '../services/api.mysterybox'
 import ApiImage from '../components/ApiImage';
+import CartIcon from '../../assets/icons/cart_outline.svg';
 
 // --- Components (Không đổi) ---
 const Checkbox = ({ isChecked, onPress }: { isChecked: boolean, onPress: () => void }) => (
@@ -270,7 +271,11 @@ export default function FavoriteBoxes({ boxes, refreshCart }: { boxes: CartBoxIt
         renderItem={renderItem}
         keyExtractor={(item) => item.mangaBoxId}
         contentContainerStyle={styles.listContent}
-        ListEmptyComponent={<View style={styles.emptyContainer}><Text>Your cart is empty.</Text></View>}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <CartIcon width={150} height={150} color="#cccccc" />
+            <Text>Your cart is empty.</Text>
+          </View>}
       />
       <View style={styles.footer}>
         <View style={styles.footerTopRow}>
@@ -321,7 +326,12 @@ export default function FavoriteBoxes({ boxes, refreshCart }: { boxes: CartBoxIt
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f0f2f5' },
   listContent: { paddingBottom: 140 },
-  emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 100 },
+  emptyText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#888',
+  },
   itemContainer: {
     flexDirection: 'row',
     alignItems: 'center',
