@@ -20,6 +20,9 @@ type AuctionItem = {
     seller_id: string;
     status: number; // 0: Pending, 1: Approved/Ongoing, -1: Denied
     productImageUrl?: string;
+    host_value: number;
+    fee_charge: string;
+    incoming_value: number;
 };
 
 type AuctionWithSeller = AuctionItem & {
@@ -123,6 +126,17 @@ export default function MyAuctions() {
                     {item.seller && (
                         <Text style={styles.sellerName}>by {item.seller.username}</Text>
                     )}
+                    {activeFilter === 'Hosted' && (
+                        <View style={styles.hostedInfoContainer}>
+                            <Text style={styles.hostedInfoText}>
+                                Initial: <Text style={styles.valueText}>{item.host_value.toLocaleString('vi-VN')} đ</Text>
+                            </Text>
+                            <Text style={styles.hostedInfoText}>
+                                Est. Income: <Text style={[styles.valueText, { color: '#28a745' }]}>{item.incoming_value.toLocaleString('vi-VN')} đ</Text>
+                            </Text>
+                        </View>
+                    )}
+
                     <Text style={[styles.statusText, { color: status.color }]}>
                         {status.text}
                     </Text>
@@ -187,4 +201,20 @@ const styles = StyleSheet.create({
     },
     sellerName: { fontFamily: 'Oxanium-Regular', fontSize: 12, color: '#888' },
     statusText: { fontFamily: 'Oxanium-Bold', fontSize: 14, marginTop: 4 },
+    // CẬP NHẬT: Đổi tên style cho nhất quán
+    hostedInfoContainer: {
+        marginTop: 6,
+        paddingTop: 6,
+        borderTopWidth: 1,
+        borderTopColor: '#f0f0f0',
+    },
+    hostedInfoText: {
+        fontFamily: 'Oxanium-Regular',
+        fontSize: 12,
+        color: '#666',
+    },
+    valueText: {
+        fontFamily: 'Oxanium-SemiBold',
+        color: '#333',
+    },
 });
