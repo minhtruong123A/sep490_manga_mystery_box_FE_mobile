@@ -6,10 +6,12 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { RootStackScreenProps, AppNavigationProp } from '../types/types';
 import { fetchUserInfo } from '../services/api.auth'; // API để lấy số dư
 import { createWithdrawTransaction } from '../services/api.user'; // API để tạo yêu cầu rút tiền
+import { useAuth } from '../context/AuthContext'; // THÊM MỚI
 
 export default function WithdrawRequest() {
     // Sửa lại để dùng AppNavigationProp cho phép điều hướng rộng hơn
     const navigation = useNavigation<AppNavigationProp>();
+    const { isAuctionJoined } = useAuth();
 
     // --- State Management ---
     const [amount, setAmount] = useState('');
@@ -41,6 +43,14 @@ export default function WithdrawRequest() {
 
     // --- Handlers ---
     const handleRequestSubmit = async () => {
+        if (isAuctionJoined) {
+            Alert.alert(
+                "Action Disabled",
+                "You cannot request a withdrawal while participating in an auction."
+            );
+            return;
+        }
+
         if (isSubmitting) return;
         const withdrawAmount = parseFloat(amount);
 
@@ -118,10 +128,11 @@ export default function WithdrawRequest() {
                     value={amount}
                     onChangeText={setAmount}
                 />
+                {/* CẬP NHẬT: Vô hiệu hóa nút nếu đang tham gia đấu giá */}
                 <TouchableOpacity
-                    style={[styles.submitButton, isSubmitting && styles.disabledButton]}
+                    style={[styles.submitButton, (isSubmitting || isAuctionJoined) && styles.disabledButton]}
                     onPress={handleRequestSubmit}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isAuctionJoined}
                 >
                     {isSubmitting ? (
                         <ActivityIndicator color="#fff" />

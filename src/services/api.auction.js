@@ -251,6 +251,7 @@ export const checkIsJoinedAuction = async () => {
       url: `/api/auction/is-joined-auction`,
       requiresAuth: true,
     });
+    console.log("true or false let's find out" + response.data)
     return response.data;
   } catch (error) {
     console.error("Check is joined auction failed:", error);

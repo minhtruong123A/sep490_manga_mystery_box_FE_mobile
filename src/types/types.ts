@@ -82,7 +82,11 @@ export type RootStackParamList = {
     SellerProfile: { sellerId: string }; // <-- Thêm màn hình mới
     Chatbox: { userName: string; avatarUrl: string; otherUserId: string; };
     WithdrawRequest: undefined; // <-- Thêm màn hình mới
-    AuctionDetail: { auctionId: string }; // <-- Thêm màn hình mới
+    AuctionDetail: {
+        auctionId: string;
+        startTime: string;
+        endTime: string;
+    };
     OrderHistory: undefined; // <-- Thêm màn hình mới
     ExchangeRequests: undefined; // <-- Thêm màn hình mới
 };
