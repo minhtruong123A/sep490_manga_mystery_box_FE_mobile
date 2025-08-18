@@ -90,6 +90,7 @@ export const updateSellProduct = async ({ id, description, price, updatedAt }) =
   }
 };
 
+
 //suggestion get all product on sale base on not owned in user collection api
 export const getAllSuggestionProductsOnSale = async () => {
   try {
