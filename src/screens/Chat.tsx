@@ -95,7 +95,8 @@ export default function Chat() {
             style={styles.friendItemContainer}
             onPress={() => navigation.navigate('Chatbox', {
                 userName: item.otherUser.username,
-                avatarUrl: item.otherUser.profileImage || ''
+                avatarUrl: item.otherUser.profileImage || '',
+                otherUserId: item.otherUser.id // <-- Thêm dòng này vào
             })}
         >
             <ApiImage urlPath={item.otherUser.profileImage} style={styles.avatar} />

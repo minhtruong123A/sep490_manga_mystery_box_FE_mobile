@@ -396,7 +396,12 @@ export default function ProductDetail({ route }: ShopStackScreenProps<'Collectio
             <View style={styles.leftActions}>
               <TouchableOpacity
                 style={styles.iconButton}
-                onPress={() => navigation.navigate('Chatbox', { userName: product.username, avatarUrl: product.userProfileImage || '' })}
+                // onPress={() => navigation.navigate('Chatbox', { userName: product.username, avatarUrl: product.userProfileImage || '' })}
+                onPress={() => navigation.navigate('Chatbox', {
+                  userName: product.username,
+                  avatarUrl: product.userProfileImage || '',
+                  otherUserId: product.userId // <-- Thêm dòng này vào
+                })}
                 disabled={isAddingToCart || isBuyingNow}
               >
                 <ChatIcon width={24} height={24} />

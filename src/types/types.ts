@@ -80,7 +80,7 @@ export type RootStackParamList = {
     'Help & Feedback': undefined;
     TopUpPackages: undefined;
     SellerProfile: { sellerId: string }; // <-- Thêm màn hình mới
-    Chatbox: { userName: string; avatarUrl: string };
+    Chatbox: { userName: string; avatarUrl: string; otherUserId: string; };
     WithdrawRequest: undefined; // <-- Thêm màn hình mới
     AuctionDetail: { auctionId: string }; // <-- Thêm màn hình mới
     OrderHistory: undefined; // <-- Thêm màn hình mới
@@ -394,4 +394,15 @@ export type AuctionItem = {
 export type AuctionStackParamList = {
     AuctionTabs: NavigatorScreenParams<AuctionTopTabParamList>; // Màn hình chính giờ là một navigator chứa các tab
     AuctionDetail: { auctionId: string };
+};
+
+// --- THÊM MỚI: TYPES CHO CHAT & MESSAGES ---
+
+// Dữ liệu cho một tin nhắn (từ API getMessages và WebSocket)
+export type ChatMessage = {
+    _id: string; // ID của tin nhắn
+    content: string;
+    sender_id: string;
+    conversation_id: string;
+    created_at: string; // ISO date string
 };
