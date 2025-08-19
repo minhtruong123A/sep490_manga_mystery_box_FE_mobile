@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     },
     // THÊM CÁC STYLE MỚI CHO NÚT ADD
     fabContainer: {
-        top: -30, // Đẩy nút lên trên
+        top: -10, // Đẩy nút lên trên
         justifyContent: 'center',
         alignItems: 'center',
     },

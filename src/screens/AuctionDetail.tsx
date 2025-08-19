@@ -204,7 +204,7 @@ export default function AuctionDetail({ route }: RootStackScreenProps<'AuctionDe
         if (!auctionData) return;
         const amount = parseFloat(bidAmount);
         if (isNaN(amount) || amount <= auctionData.currentPrice) {
-            Alert.alert("Invalid Bid", `Your bid must be higher than ${auctionData.currentPrice.toLocaleString('vi-VN')} đ.`);
+            Alert.alert("Invalid Bid", `Your bid must be higher than ${auctionData.currentPrice.toLocaleString('vi-VN')} VND.`);
             return;
         }
 
@@ -253,7 +253,7 @@ export default function AuctionDetail({ route }: RootStackScreenProps<'AuctionDe
                 <ApiImage urlPath={auctionData.productImageUrl} style={styles.productImage} />
                 <View style={styles.priceInfo}>
                     <Text style={styles.priceLabel}>Highest Bid:</Text>
-                    <Text style={[styles.priceValue, { color: '#28a745' }]}>{(auctionData.currentPrice ?? 0).toLocaleString('vi-VN')} đ</Text>
+                    <Text style={[styles.priceValue, { color: '#28a745' }]}>{(auctionData.currentPrice ?? 0).toLocaleString('vi-VN')} VND</Text>
                 </View>
                 <View style={styles.infoContainer}>
                     {/* PHẦN CODE ĐƯỢC THÊM LẠI */}
@@ -272,11 +272,11 @@ export default function AuctionDetail({ route }: RootStackScreenProps<'AuctionDe
 
                     <View style={styles.priceInfo}>
                         <Text style={styles.priceLabel}>Starting Price:</Text>
-                        <Text style={styles.priceValue}>{(auctionData.startingPrice ?? 0).toLocaleString('vi-VN')} đ</Text>
+                        <Text style={styles.priceValue}>{(auctionData.startingPrice ?? 0).toLocaleString('vi-VN')} VND</Text>
                     </View>
                     <View style={styles.priceInfo}>
                         <Text style={styles.priceLabel}>Highest Bid:</Text>
-                        <Text style={[styles.priceValue, { color: '#28a745' }]}>{(auctionData.currentPrice ?? 0).toLocaleString('vi-VN')} đ</Text>
+                        <Text style={[styles.priceValue, { color: '#28a745' }]}>{(auctionData.currentPrice ?? 0).toLocaleString('vi-VN')} VND</Text>
                     </View>
                     <View style={styles.divider} />
                     <Text style={styles.sectionTitle}>Description</Text>
@@ -291,7 +291,7 @@ export default function AuctionDetail({ route }: RootStackScreenProps<'AuctionDe
                             renderItem={({ item }) => (
                                 <View style={styles.historyItem}>
                                     <Text style={styles.bidderName}>{item.username}</Text>
-                                    <Text style={styles.bidAmount}>{(item.price ?? 0).toLocaleString('vi-VN')} đ</Text>
+                                    <Text style={styles.bidAmount}>{(item.price ?? 0).toLocaleString('vi-VN')} VND</Text>
                                     <Text style={styles.bidTimestamp}>{new Date(item.created_at).toLocaleTimeString('vi-VN')}</Text>
                                 </View>
                             )}
@@ -335,7 +335,7 @@ export default function AuctionDetail({ route }: RootStackScreenProps<'AuctionDe
                             <View style={styles.bidInputContainer}>
                                 <TextInput
                                     style={styles.input}
-                                    placeholder={`Bid > ${(auctionData.currentPrice ?? 0).toLocaleString('vi-VN')} đ`}
+                                    placeholder={`Bid > ${(auctionData.currentPrice ?? 0).toLocaleString('vi-VN')} VND`}
                                     keyboardType="numeric"
                                     value={bidAmount}
                                     onChangeText={setBidAmount}

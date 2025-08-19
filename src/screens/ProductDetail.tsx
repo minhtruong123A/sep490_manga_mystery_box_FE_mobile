@@ -340,7 +340,7 @@ export default function ProductDetail({ route }: ShopStackScreenProps<'Collectio
             <StarRating rating={avgRating} reviewCount={reviewCount} />
 
             <View style={styles.rarityContainer}><Text style={[styles.rarityText, { color: getRarityColor(product.rateName) }]}>{capitalizeFirstLetter(product.rateName)}</Text></View>
-            <Text style={styles.priceText}>{product.price.toLocaleString('vi-VN')} đ</Text>
+            <Text style={styles.priceText}>{product.price.toLocaleString('vi-VN')} VND</Text>
 
             <TouchableOpacity style={styles.sellerContainer} onPress={() => navigation.navigate('SellerProfile', { sellerId: product.userId })}>
               <ApiImage urlPath={product.userProfileImage} style={styles.sellerAvatar} />

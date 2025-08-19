@@ -43,7 +43,7 @@ const ProductItem: React.FC<ProductItemProps> = ({ item, onPress, isNew }) => {
                         {capitalizeFirstLetter(item.rarityName)}
                     </Text>
                 </View>
-                <Text style={styles.itemPrice}>{item.price.toLocaleString('vi-VN')} đ</Text>
+                <Text style={styles.itemPrice}>{item.price.toLocaleString('vi-VN')} VND</Text>
             </View>
         </TouchableOpacity>
     );

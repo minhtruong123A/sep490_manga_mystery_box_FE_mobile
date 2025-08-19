@@ -162,7 +162,7 @@ export default function BoxDetail({ route }: ShopStackScreenProps<'Box Detail'>)
 
           {/* Sử dụng mysteryBoxPrice */}
           <Text style={styles.priceText}>
-            {box.mysteryBoxPrice.toLocaleString('vi-VN')} đ
+            {box.mysteryBoxPrice.toLocaleString('vi-VN')} VND
           </Text>
 
           {/* THÊM MỚI: Bộ chọn số lượng */}

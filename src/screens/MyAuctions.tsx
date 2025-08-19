@@ -208,7 +208,7 @@ export default function MyAuctions() {
                                 <Text style={styles.valueText}>
                                     {/* Kiểm tra xem item.host_value có phải là một số không */}
                                     {typeof item.host_value === 'number'
-                                        ? `${item.host_value.toLocaleString('vi-VN')} đ`
+                                        ? `${item.host_value.toLocaleString('vi-VN')} VND`
                                         : 'N/A'}
                                 </Text>
                             </Text>
@@ -217,7 +217,7 @@ export default function MyAuctions() {
                                 <Text style={[styles.valueText, { color: '#28a745' }]}>
                                     {/* Kiểm tra tương tự cho item.incoming_value */}
                                     {typeof item.incoming_value === 'number'
-                                        ? `${item.incoming_value.toLocaleString('vi-VN')} đ`
+                                        ? `${item.incoming_value.toLocaleString('vi-VN')} VND`
                                         : 'N/A'}
                                 </Text>
                             </Text>

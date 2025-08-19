@@ -154,10 +154,17 @@ export default function SearchResults({ onClose }: SearchResultsProps) {
                 screen: 'Shop',
                 params: { screen: 'Collection Detail', params: { productId: item.id } },
             });
-        } else {
+        } else if (item.itemType === 'auction') {
             navigation.navigate('MainTabs', {
                 screen: 'Auction',
-                params: { screen: 'AuctionDetail', params: { auctionId: item.id } },
+                params: {
+                    screen: 'AuctionDetail',
+                    params: {
+                        auctionId: item._id,
+                        startTime: new Date(item.start_time).toISOString(),
+                        endTime: new Date(item.end_time).toISOString(),
+                    },
+                },
             });
         }
     };
@@ -212,7 +219,7 @@ export default function SearchResults({ onClose }: SearchResultsProps) {
                     <Text style={styles.itemCollection}>{subText}</Text>
                 </View>
                 {price !== undefined && (
-                    <Text style={styles.itemPrice}>{price.toLocaleString('vi-VN')} đ</Text>
+                    <Text style={styles.itemPrice}>{price.toLocaleString('vi-VN')} VND</Text>
                 )}
             </TouchableOpacity>
         );

@@ -16,12 +16,12 @@ const CustomTabBar = ({ state, descriptors, navigation, totalReceived, totalSpen
             return (value / 1e12).toFixed(2) + ' T'; // Trillion
         } else if (value >= 1e9) {
             return (value / 1e9).toFixed(2) + ' B'; // Billion
+        } else if (value >= 1e6) {
+            return (value / 1e6).toFixed(2) + ' M'; // Million
         } else {
             return value.toLocaleString('vi-VN');
         }
-        // else if (value >= 1e6) {
-        //     return (value / 1e6).toFixed(2) + ' M'; // Million
-        // } 
+
     };
 
     return (
@@ -53,10 +53,10 @@ const CustomTabBar = ({ state, descriptors, navigation, totalReceived, totalSpen
 
             <View style={styles.totalsContainer}>
                 <Text style={styles.totalText}>
-                    Received: <Text style={styles.totalAmountReceived}>{formatCurrency(totalReceived)} đ</Text>
+                    Received: <Text style={styles.totalAmountReceived}>{formatCurrency(totalReceived)} VND</Text>
                 </Text>
                 <Text style={styles.totalText}>
-                    Spent: <Text style={styles.totalAmountSpent}>{formatCurrency(totalSpent)} đ</Text>
+                    Spent: <Text style={styles.totalAmountSpent}>{formatCurrency(totalSpent)} VND</Text>
                 </Text>
             </View>
         </View>
@@ -87,7 +87,7 @@ const TransactionHistoryScreen = ({ transactions }: { transactions: TransactionI
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
                     <Text style={[styles.transactionAmount, { color: item.type === 'Recharge' ? '#dc3545' : '#28a745' }]}>
-                        {item.type === 'Recharge' ? '-' : '+'} {item.amount.toLocaleString('vi-VN')} đ
+                        {item.type === 'Recharge' ? '-' : '+'} {item.amount.toLocaleString('vi-VN')} VND
                     </Text>
                     <Text style={[styles.transactionStatus, { color: statusStyle.color }]}>{statusStyle.text}</Text>
                 </View>

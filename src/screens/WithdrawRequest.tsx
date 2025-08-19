@@ -119,7 +119,7 @@ export default function WithdrawRequest() {
                 <Text style={styles.title}>Withdraw Funds</Text>
                 <Text style={styles.balanceInfo}>
                     Max withdrawal:
-                    <Text style={styles.balanceAmount}> {(balance ?? 0).toLocaleString('vi-VN')} đ</Text>
+                    <Text style={styles.balanceAmount}> {(balance ?? 0).toLocaleString('vi-VN')} VND</Text>
                 </Text>
                 <TextInput
                     style={styles.input}

@@ -251,7 +251,7 @@ export default function FavoriteBoxes({ boxes, refreshCart }: { boxes: CartBoxIt
         <ApiImage urlPath={item.box.urlImage} style={styles.itemImage} />
         <View style={styles.itemInfo}>
           <Text style={styles.itemName} numberOfLines={2}>{item.box.mysteryBoxName}</Text>
-          <Text style={styles.itemPrice}>{item.box.mysteryBoxPrice.toLocaleString('vi-VN')} đ</Text>
+          <Text style={styles.itemPrice}>{item.box.mysteryBoxPrice.toLocaleString('vi-VN')} VND</Text>
         </View>
         {isSelected && !isFavorited && (
           <QuantitySelector
@@ -307,7 +307,7 @@ export default function FavoriteBoxes({ boxes, refreshCart }: { boxes: CartBoxIt
         <View style={styles.footerBottomRow}>
           <View style={styles.totalContainer}>
             <Text style={styles.totalLabel}>Total:</Text>
-            <Text style={styles.totalAmount}>{totalAmount.toLocaleString('vi-VN')} đ</Text>
+            <Text style={styles.totalAmount}>{totalAmount.toLocaleString('vi-VN')} VND</Text>
           </View>
           <TouchableOpacity
             style={[styles.buyButton, isCheckingOut && styles.disabledButton]}

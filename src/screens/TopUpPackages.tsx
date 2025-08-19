@@ -159,7 +159,7 @@ export default function TopUpPackages() {
                 ) : (
                     <>
                         <Text style={styles.packageName}>{item.name}</Text>
-                        <Text style={styles.packageAmount}>{item.amount.toLocaleString('vi-VN')} đ</Text>
+                        <Text style={styles.packageAmount}>{item.amount.toLocaleString('vi-VN')} VND</Text>
                     </>
                 )}
             </TouchableOpacity>

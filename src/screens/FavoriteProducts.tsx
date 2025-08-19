@@ -313,7 +313,7 @@ export default function FavoriteProducts({ products, refreshCart }: { products: 
                     <TouchableOpacity onPress={() => navigation.navigate('SellerProfile', { sellerId: item.product.userId })}>
                         <Text style={styles.sellerName}>by {item.product.username}</Text>
                     </TouchableOpacity>
-                    <Text style={styles.itemPrice}>{item.product.price.toLocaleString('vi-VN')} đ</Text>
+                    <Text style={styles.itemPrice}>{item.product.price.toLocaleString('vi-VN')} VND</Text>
                 </View>
                 {isSelected && !isFavorited && (
                     <QuantitySelector
@@ -362,7 +362,7 @@ export default function FavoriteProducts({ products, refreshCart }: { products: 
                 <View style={styles.footerBottomRow}>
                     <View style={styles.totalContainer}>
                         <Text style={styles.totalLabel}>Total:</Text>
-                        <Text style={styles.totalAmount}>{totalAmount.toLocaleString('vi-VN')} đ</Text>
+                        <Text style={styles.totalAmount}>{totalAmount.toLocaleString('vi-VN')} VND</Text>
                     </View>
                     <TouchableOpacity
                         style={[styles.buyButton, isCheckingOut && styles.disabledButton]}
