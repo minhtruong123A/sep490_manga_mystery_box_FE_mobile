@@ -43,6 +43,7 @@ export default function WithdrawRequest() {
 
     // --- Handlers ---
     const handleRequestSubmit = async () => {
+        console.log(`[AuthContext] Trạng thái đấu giá toàn cục hiện tại: ${isAuctionJoined}`);
         if (isAuctionJoined) {
             Alert.alert(
                 "Action Disabled",

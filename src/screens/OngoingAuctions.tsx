@@ -62,6 +62,7 @@ export default function OngoingAuctions() {
         setError(null);
         try {
             const auctionRes = await fetchAuctionList(filter);
+            console.log("Dữ liệu gốc từ API:", auctionRes.data); // Log này rất quan trọng
             if (auctionRes.success && Array.isArray(auctionRes.data)) {
                 // Gọi thêm profile người bán cho từng auction
                 const flatAuctions: AuctionItem[] = auctionRes.data.flat();

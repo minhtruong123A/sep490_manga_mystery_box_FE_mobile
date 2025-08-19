@@ -13,6 +13,7 @@ import FilterBar from '../components/FilterBar';
 // Giữ nguyên các type này để component hiểu cấu trúc dữ liệu
 type AuctionItem = {
     _id: string;
+    id: string;
     title: string;
     descripition: string;
     start_time: string;
@@ -182,12 +183,13 @@ export default function MyAuctions() {
     );
     // --- Render Logic ---
     const renderItem = ({ item }: { item: AuctionWithSeller }) => {
+        console.log(item.id);
         const status = getStatusInfo(item);
         return (
             <TouchableOpacity
                 style={styles.itemContainer}
                 onPress={() => navigation.navigate('AuctionDetail', {
-                    auctionId: item._id,
+                    auctionId: item.id || item._id,
                     startTime: item.start_time,
                     endTime: item.end_time,
                 })}            >

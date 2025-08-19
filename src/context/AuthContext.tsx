@@ -14,6 +14,7 @@ type AuthContextType = {
     isLoading: boolean;
     isAuthenticated: boolean;
     isAuctionJoined: boolean;
+    setIsAuctionJoinedManually: (status: boolean) => void; // Thêm hàm này
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,6 +24,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<UserProfile | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isAuctionJoined, setIsAuctionJoined] = useState(false);
+    console.log(`[AuthContext] Trạng thái đấu giá toàn cục hiện tại: ${isAuctionJoined}`);
     const pollingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     const stopGlobalPolling = useCallback(() => {
@@ -38,8 +40,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setIsAuctionJoined(true);
         const intervalId = setInterval(async () => {
             try {
+                console.log("✅ [Polling] Đang kiểm tra trạng thái tham gia đấu giá...");
+
                 const auctionStatusRes = await checkIsJoinedAuction();
+                console.log(" stopping.");
                 if (auctionStatusRes.success && auctionStatusRes.data?.[0] === false) {
+                    console.log("✅ [Polling] Người dùng không còn trong phiên đấu giá. Đã dừng kiểm tra.");
                     stopGlobalPolling();
                     if (user) await AsyncStorage.removeItem(`pendingAuction_${user.id}`);
                 }
@@ -50,6 +56,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }, 60000);
         pollingTimerRef.current = intervalId;
     }, [user, stopGlobalPolling]);
+
+    const setIsAuctionJoinedManually = useCallback((status: boolean) => {
+        setIsAuctionJoined(status);
+    }, []);
 
     const logout = useCallback(async () => {
         stopGlobalPolling();
@@ -125,7 +135,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         login,
         logout,
         isAuctionJoined,
-    }), [userToken, user, isLoading, isAuctionJoined, login, logout]);
+        setIsAuctionJoinedManually, // Thêm hàm này vào value
+    }), [userToken, user, isLoading, isAuctionJoined, login, logout, setIsAuctionJoinedManually]);
 
     if (isLoading) {
         return (

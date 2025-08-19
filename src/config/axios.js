@@ -135,7 +135,7 @@ const pythonApiWithFallback = async (config) => {
 export const PYTHON_API_BASE_URL = 'https://api.mmb.io.vn/py';
 export const BACKUP_PYTHON_API_BASE_URL = 'https://sep490-manga-mystery-box-pybe.onrender.com';
 // export const api = PYTHON_API_BASE_URL;
-// Export các instance để dùng trực tiếp nếu cần
+// Export các instance để dùng trực tiếp nếu cần BACKUP_PYTHON_API_BASE_URL PYTHON_API_BASE_URL
 export default primaryAxios; // Dùng mặc định là C#
 export {
   pythonAxios,

@@ -71,11 +71,47 @@ export default function AuctionDetail({ route }: RootStackScreenProps<'AuctionDe
             auctionId: sessionId,
             token: userToken || '',
             debug: true,
+            reconnect: true,
         });
 
+        // SỬA LỖI LOGIC HOÀN CHỈNH
         socket.onmessage = async (payload) => {
+            console.log("WebSocket message received:", payload);
+
             if (payload && payload.bid_amount && payload.bidder_id) {
-                // ... (logic onmessage không đổi)
+                const newPrice = parseFloat(payload.bid_amount);
+
+                // 1. Cập nhật giá mới nhất
+                setAuctionData(prevData => {
+                    if (!prevData) return null;
+                    return { ...prevData, currentPrice: newPrice };
+                });
+
+                // 2. Lấy username của người vừa bid
+                let bidderUsername = 'A bidder';
+                try {
+                    const profileRes = await getOtherProfile(payload.bidder_id);
+                    if (profileRes.status && profileRes.data) {
+                        bidderUsername = profileRes.data.username;
+                    }
+                } catch (e) {
+                    console.error("Could not fetch bidder profile", e);
+                }
+
+                // 3. Sửa định dạng ngày tháng
+                const formattedDate = (payload.bid_time || "").replace(" ", "T") + "Z";
+
+                // 4. Tạo object bid mới
+                const newBid: BidHistoryItem = {
+                    _id: `ws-${Date.now()}`,
+                    user_id: payload.bidder_id,
+                    username: bidderUsername,
+                    price: newPrice,
+                    created_at: formattedDate,
+                };
+
+                // 5. Thêm vào đầu danh sách lịch sử
+                setBidHistory(prevHistory => [newBid, ...prevHistory]);
             }
         };
         socket.onclose = () => console.log("WebSocket disconnected.");
@@ -119,6 +155,7 @@ export default function AuctionDetail({ route }: RootStackScreenProps<'AuctionDe
             });
 
             const storedAuctionId = await AsyncStorage.getItem(PENDING_AUCTION_KEY);
+            console.log("go go poweranger" + PENDING_AUCTION_KEY);
             if (storedAuctionId && storedAuctionId === auctionProduct.auction_session_id) {
                 setHasJoinedThisSession(true);
                 await initializeWebSocket(auctionProduct.auction_session_id);
@@ -178,7 +215,8 @@ export default function AuctionDetail({ route }: RootStackScreenProps<'AuctionDe
                                     await initializeWebSocket(auctionData.auctionSessionId);
                                 } else if (joinRes.success) {
                                     // Lỗi từ API joinAuction
-                                    await AsyncStorage.setItem(PENDING_AUCTION_KEY, auctionData.auctionSessionId);
+                                    const setupgogo = await AsyncStorage.setItem(PENDING_AUCTION_KEY, auctionData.auctionSessionId);
+                                    console.log("check auction" + setupgogo);
                                     setHasJoinedThisSession(true);
                                     await initializeWebSocket(auctionData.auctionSessionId);
                                 } else {
