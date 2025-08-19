@@ -111,7 +111,7 @@ export default function ProductDetail({ route }: ShopStackScreenProps<'Collectio
   const { productId } = route.params;
 
   // THÊM MỚI: Lấy thông tin người dùng hiện tại
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, isAuctionJoined } = useAuth();
 
   // THÊM MỚI: State cho dữ liệu API
   const [product, setProduct] = useState<ProductOnSaleDetailItem | null>(null);
@@ -426,9 +426,9 @@ export default function ProductDetail({ route }: ShopStackScreenProps<'Collectio
 
           {!isMyProduct ? (
             <TouchableOpacity
-              style={[styles.buyButton, (isBuyingNow || isAddingToCart) && styles.disabledButton]}
+              style={[styles.buyButton, (isBuyingNow || isAddingToCart || isAuctionJoined) && styles.disabledButton]}
               onPress={handleBuyNow}
-              disabled={isBuyingNow || isAddingToCart}
+              disabled={isBuyingNow || isAddingToCart || isAuctionJoined}
             >
               {isBuyingNow ? (
                 <ActivityIndicator color="#fff" />

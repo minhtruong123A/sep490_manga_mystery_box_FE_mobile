@@ -12,6 +12,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons'; // THÊM MỚI
 import AsyncStorage from '@react-native-async-storage/async-storage'; // THÊM MỚI
+import { useAuth } from '../context/AuthContext'; // THÊM MỚI
 
 // --- Types, APIs, Components ---
 import { RootStackNavigationProp, CartProductItem } from '../types/types';
@@ -19,7 +20,6 @@ import { updateCartQuantity, removeFromCart, clearAllCart } from '../services/ap
 import { buyProductOnSale } from '../services/api.product';
 import ApiImage from '../components/ApiImage';
 import CartIcon from '../../assets/icons/cart_outline.svg';
-
 
 // --- Components (Không đổi) ---
 const Checkbox = ({ isChecked, onPress }: { isChecked: boolean, onPress: () => void }) => (
@@ -43,6 +43,7 @@ const QuantitySelector = ({ quantity, onDecrease, onIncrease, maxQuantity }: { q
 // --- Màn hình chính ---
 export default function FavoriteProducts({ products, refreshCart }: { products: CartProductItem[], refreshCart: () => void }) {
     const navigation = useNavigation<RootStackNavigationProp>();
+    const { isAuctionJoined } = useAuth();
 
     // State nội bộ của component
     const [cartProducts, setCartProducts] = useState(products);
@@ -365,9 +366,9 @@ export default function FavoriteProducts({ products, refreshCart }: { products: 
                         <Text style={styles.totalAmount}>{totalAmount.toLocaleString('vi-VN')} VND</Text>
                     </View>
                     <TouchableOpacity
-                        style={[styles.buyButton, isCheckingOut && styles.disabledButton]}
+                        style={[styles.buyButton, (isCheckingOut || isAuctionJoined) && styles.disabledButton]}
                         onPress={handleCheckout}
-                        disabled={isCheckingOut}
+                        disabled={isCheckingOut || isAuctionJoined}
                     >
                         {isCheckingOut ? <ActivityIndicator color="#fff" /> : <Text style={styles.buyButtonText}>Checkout</Text>}
                     </TouchableOpacity>

@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons'; // THÊM MỚI
 import AsyncStorage from '@react-native-async-storage/async-storage'; // THÊM MỚI
+import { useAuth } from '../context/AuthContext'; // THÊM MỚI
 
 // --- Types, APIs, Components ---
 import { CartBoxItem } from '../types/types';
@@ -42,6 +43,7 @@ const QuantitySelector = ({ quantity, onDecrease, onIncrease }: { quantity: numb
 export default function FavoriteBoxes({ boxes, refreshCart }: { boxes: CartBoxItem[], refreshCart: () => void }) {
   // --- State Management ---
   const [cartBoxes, setCartBoxes] = useState(boxes);
+  const { isAuctionJoined } = useAuth();
   const [selectedItems, setSelectedItems] = useState<Map<string, number>>(new Map());
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   // THÊM MỚI: State và logic cho "Yêu thích"
@@ -310,9 +312,9 @@ export default function FavoriteBoxes({ boxes, refreshCart }: { boxes: CartBoxIt
             <Text style={styles.totalAmount}>{totalAmount.toLocaleString('vi-VN')} VND</Text>
           </View>
           <TouchableOpacity
-            style={[styles.buyButton, isCheckingOut && styles.disabledButton]}
+            style={[styles.buyButton, (isCheckingOut || isAuctionJoined) && styles.disabledButton]}
             onPress={handleCheckout}
-            disabled={isCheckingOut}
+            disabled={isCheckingOut || isAuctionJoined}
           >
             {isCheckingOut ? <ActivityIndicator color="#fff" /> : <Text style={styles.buyButtonText}>Checkout</Text>}
           </TouchableOpacity>
