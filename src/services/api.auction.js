@@ -103,6 +103,21 @@ export const fetchMyAuctionList = async () => {
 };
 
 
+export const GetMyUserProductToAuctionList = async () => {
+  try {
+    const response = await pythonApiWithFallback({
+      method: "get",
+      url: "/api/auction/user-product",
+      requiresAuth: true,
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error("Get my user product to auction list failed:", error);
+    throw error;
+  }
+};
+
 export const newAuction = async (auctionData) => {
   const payload = {
     title: auctionData.title,

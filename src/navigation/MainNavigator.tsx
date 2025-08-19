@@ -1,9 +1,10 @@
 // src/navigation/MainNavigator.tsx
 
 import React from 'react';
-import { StyleSheet, View, Text } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useNavigation } from '@react-navigation/native';
 
 // Icons
 import ShopIcon from '../../assets/icons/shop.svg';
@@ -28,14 +29,23 @@ import WithdrawRequest from '../screens/WithdrawRequest';
 import Chat from '../screens/Chat';
 import OngoingAuctions from '../screens/OngoingAuctions'; // Import màn hình danh sách
 import AuctionDetail from '../screens/AuctionDetail';
+import AddAuction from '../screens/AddAuction'; // Giả sử bạn có màn hình này
+import { Svg, Path } from 'react-native-svg';
 
 // Types
 import {
     RootTabParamList,
     ShopStackParamList,
     PaymentStackParamList,
-    AuctionStackParamList
+    AuctionStackParamList,
+    AppNavigationProp // SỬA LỖI: Import type chung
 } from '../types/types';
+
+const AddIcon = (props: any) => (
+    <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" {...props}>
+        <Path d="M12 5v14m-7-7h14" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+);
 
 const Tab = createBottomTabNavigator<RootTabParamList>();
 const ShopStackNav = createNativeStackNavigator<ShopStackParamList>();
@@ -81,6 +91,7 @@ function PaymentStack() {
 // --- Component chính: MainTabs ---
 
 export default function MainTabs() {
+    const navigation = useNavigation<AppNavigationProp>();
     return (
         <Tab.Navigator
             screenOptions={({ route }) => ({
@@ -110,6 +121,24 @@ export default function MainTabs() {
             <Tab.Screen name="Shop" component={ShopStack} />
             {/* <Tab.Screen name="Auction" component={Auction} /> */}
             <Tab.Screen name="Auction" component={AuctionStack} />
+            {/* NÚT BẤM MỚI Ở GIỮA */}
+            <Tab.Screen
+                name="AddAuctionTab"
+                component={() => null}
+                options={{
+                    tabBarLabel: () => null,
+                    tabBarButton: () => (
+                        <TouchableOpacity
+                            style={styles.fabContainer}
+                            onPress={() => navigation.navigate('AddAuction')}
+                        >
+                            <View style={styles.fab}>
+                                <AddIcon width={30} height={30} />
+                            </View>
+                        </TouchableOpacity>
+                    ),
+                }}
+            />
             <Tab.Screen name="Payment" component={PaymentStack} />
             <Tab.Screen name="Chat" component={Chat} />
         </Tab.Navigator>
@@ -129,5 +158,24 @@ const styles = StyleSheet.create({
     tabBarLabel: {
         fontFamily: 'Oxanium-SemiBold',
         fontSize: 12,
+    },
+    // THÊM CÁC STYLE MỚI CHO NÚT ADD
+    fabContainer: {
+        top: -30, // Đẩy nút lên trên
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    fab: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        backgroundColor: '#d9534f',
+        justifyContent: 'center',
+        alignItems: 'center',
+        // elevation: 8,
+        // shadowColor: '#000',
+        // shadowOpacity: 0.3,
+        // shadowRadius: 4,
+        // shadowOffset: { width: 0, height: 2 },
     },
 });

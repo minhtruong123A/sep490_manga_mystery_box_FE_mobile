@@ -65,6 +65,7 @@ export type ShoppingCartStackParamList = {
 export type RootTabParamList = {
     Shop: NavigatorScreenParams<ShopStackParamList>;
     Auction: NavigatorScreenParams<AuctionStackParamList> | undefined;
+    AddAuctionTab: undefined; // <-- THÊM DÒNG NÀY
     Payment: NavigatorScreenParams<PaymentStackParamList>;
     Chat: undefined;
 };
@@ -89,6 +90,7 @@ export type RootStackParamList = {
     };
     OrderHistory: undefined; // <-- Thêm màn hình mới
     ExchangeRequests: undefined; // <-- Thêm màn hình mới
+    AddAuction: undefined; // <-- Thêm dòng này vào
 };
 
 // --- TYPE PROPS ---
@@ -397,7 +399,12 @@ export type AuctionItem = {
 
 export type AuctionStackParamList = {
     AuctionTabs: NavigatorScreenParams<AuctionTopTabParamList>; // Màn hình chính giờ là một navigator chứa các tab
-    AuctionDetail: { auctionId: string };
+    // Sửa lại dòng này để bao gồm tất cả các tham số cần thiết
+    AuctionDetail: {
+        auctionId: string;
+        startTime: string;
+        endTime: string;
+    };
 };
 
 // --- THÊM MỚI: TYPES CHO CHAT & MESSAGES ---
@@ -410,3 +417,7 @@ export type ChatMessage = {
     conversation_id: string;
     created_at: string; // ISO date string
 };
+
+// THÊM TYPE HELPER NÀY VÀO (nếu chưa có)
+export type AuctionStackScreenProps<T extends keyof AuctionStackParamList> =
+    NativeStackScreenProps<AuctionStackParamList, T>;
