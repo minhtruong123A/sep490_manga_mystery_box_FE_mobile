@@ -224,10 +224,25 @@ export const addBidAuction = async (auction_id, ammount) => {
       url: `/api/auction/bid?auction_id=${auction_id}&ammount=${ammount}`,
       requiresAuth: true,
     });
-    return response.data;
+    return response.data; // thành công thì return data
   } catch (error) {
-    console.error(`Add bid failed (auction_id=${auction_id}, ammount=${ammount}):`, error);
-    throw error;
+    console.error(
+      `Add bid failed (auction_id=${auction_id}, ammount=${ammount}):`,
+      error.response?.data || error.message
+    );
+
+    // nếu API có trả JSON { success, error, error_code } thì return về cho UI xử lý
+    if (error.response?.data) {
+      return error.response.data;
+    }
+
+    // fallback cho lỗi khác (network error, v.v.)
+    return {
+      success: false,
+      data: null,
+      error: error.message || "Unknown error",
+      error_code: error.response?.status || 500,
+    };
   }
 };
 

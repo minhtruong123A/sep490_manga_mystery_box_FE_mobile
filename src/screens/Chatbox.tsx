@@ -228,7 +228,7 @@ export default function Chatbox({ route }: RootStackScreenProps<'Chatbox'>) {
             <KeyboardAvoidingView
                 style={{ flex: 1 }}
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 48}
             >
                 {connectionStatus !== 'connected' && (
                     <View style={[styles.statusBanner, connectionStatus === 'error' && { backgroundColor: '#dc3545' }]}>
@@ -328,6 +328,7 @@ const styles = StyleSheet.create({
     inputContainer: {
         flexDirection: 'row',
         padding: 10,
+        marginBottom: 32,
         backgroundColor: '#fff',
         borderTopWidth: 1,
         borderTopColor: '#eee',
