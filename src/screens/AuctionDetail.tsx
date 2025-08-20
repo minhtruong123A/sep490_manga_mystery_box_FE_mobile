@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator, FlatList, AppState } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator, FlatList, AppState, KeyboardAvoidingView, Platform } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -252,7 +252,20 @@ export default function AuctionDetail({ route }: RootStackScreenProps<'AuctionDe
                 Alert.alert("Success", "Your bid has been placed.");
                 setBidAmount('');
             } else {
-                throw new Error(bidRes.error || "Failed to place bid.");
+                // xử lý theo error message
+                if (bidRes.error === "bid ammount invalid") {
+                    Alert.alert("Error", "Bid amount invalid");
+                }
+                else if (bidRes.error === "insuffient ammount !") {
+                    Alert.alert(
+                        "Insufficient funds",
+                        "Do you want to recharge?",
+                        [
+                            { text: "No", style: "cancel" },
+                            { text: "Yes", onPress: () => navigation.navigate('TopUpPackages') }
+                        ]
+                    );
+                }
             }
         } catch (err: any) {
             Alert.alert("Error", err.message || "An error occurred.");
@@ -287,106 +300,113 @@ export default function AuctionDetail({ route }: RootStackScreenProps<'AuctionDe
 
     return (
         <SafeAreaView style={styles.container}>
-            <ScrollView>
-                <ApiImage urlPath={auctionData.productImageUrl} style={styles.productImage} />
-                <View style={styles.priceInfo}>
-                    <Text style={styles.priceLabel}>Highest Bid:</Text>
-                    <Text style={[styles.priceValue, { color: '#28a745' }]}>{(auctionData.currentPrice ?? 0).toLocaleString('vi-VN')} VND</Text>
-                </View>
-                <View style={styles.infoContainer}>
-                    {/* PHẦN CODE ĐƯỢC THÊM LẠI */}
-                    <View style={styles.nameRow}>
-                        <Text style={styles.productName}>{auctionData.productName}</Text>
-                        <View style={[styles.rarityBadge, { borderColor: getRarityColor(auctionData.productRarity) }]}>
-                            <Text style={[styles.rarityText, { color: getRarityColor(auctionData.productRarity) }]}>
-                                {auctionData.productRarity.toUpperCase()}
-                            </Text>
-                        </View>
-                    </View>
-                    <TouchableOpacity style={styles.sellerContainer} onPress={() => navigation.navigate('SellerProfile', { sellerId: auctionData.sellerId })}>
-                        <ApiImage urlPath={auctionData.sellerProfileImage} style={styles.sellerAvatar} />
-                        <Text style={styles.sellerName}>by {auctionData.sellerUsername}</Text>
-                    </TouchableOpacity>
-
-                    <View style={styles.priceInfo}>
-                        <Text style={styles.priceLabel}>Starting Price:</Text>
-                        <Text style={styles.priceValue}>{(auctionData.startingPrice ?? 0).toLocaleString('vi-VN')} VND</Text>
-                    </View>
+            <KeyboardAvoidingView
+                style={{ flex: 1 }}
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 140}
+            >
+                <ScrollView>
+                    <ApiImage urlPath={auctionData.productImageUrl} style={styles.productImage} />
                     <View style={styles.priceInfo}>
                         <Text style={styles.priceLabel}>Highest Bid:</Text>
                         <Text style={[styles.priceValue, { color: '#28a745' }]}>{(auctionData.currentPrice ?? 0).toLocaleString('vi-VN')} VND</Text>
                     </View>
-                    <View style={styles.divider} />
-                    <Text style={styles.sectionTitle}>Description</Text>
-                    <Text style={styles.descriptionText}>{auctionData.description}</Text>
-                    <View style={styles.divider} />
-                    {/* KẾT THÚC PHẦN CODE ĐƯỢC THÊM LẠI */}
-                    <Text style={styles.sectionTitle}>Bid History ({bidHistory.length} bids)</Text>
-                    {hasJoinedThisSession ? (
-                        <FlatList
-                            data={bidHistory}
-                            keyExtractor={item => item._id}
-                            renderItem={({ item }) => (
-                                <View style={styles.historyItem}>
-                                    <Text style={styles.bidderName}>{item.username}</Text>
-                                    <Text style={styles.bidAmount}>{(item.price ?? 0).toLocaleString('vi-VN')} VND</Text>
-                                    <Text style={styles.bidTimestamp}>{new Date(item.created_at).toLocaleTimeString('vi-VN')}</Text>
+                    <View style={styles.infoContainer}>
+                        {/* PHẦN CODE ĐƯỢC THÊM LẠI */}
+                        <View style={styles.nameRow}>
+                            <Text style={styles.productName}>{auctionData.productName}</Text>
+                            <View style={[styles.rarityBadge, { borderColor: getRarityColor(auctionData.productRarity) }]}>
+                                <Text style={[styles.rarityText, { color: getRarityColor(auctionData.productRarity) }]}>
+                                    {auctionData.productRarity.toUpperCase()}
+                                </Text>
+                            </View>
+                        </View>
+                        <TouchableOpacity style={styles.sellerContainer} onPress={() => navigation.navigate('SellerProfile', { sellerId: auctionData.sellerId })}>
+                            <ApiImage urlPath={auctionData.sellerProfileImage} style={styles.sellerAvatar} />
+                            <Text style={styles.sellerName}>by {auctionData.sellerUsername}</Text>
+                        </TouchableOpacity>
+
+                        <View style={styles.priceInfo}>
+                            <Text style={styles.priceLabel}>Starting Price:</Text>
+                            <Text style={styles.priceValue}>{(auctionData.startingPrice ?? 0).toLocaleString('vi-VN')} VND</Text>
+                        </View>
+                        <View style={styles.priceInfo}>
+                            <Text style={styles.priceLabel}>Highest Bid:</Text>
+                            <Text style={[styles.priceValue, { color: '#28a745' }]}>{(auctionData.currentPrice ?? 0).toLocaleString('vi-VN')} VND</Text>
+                        </View>
+                        <View style={styles.divider} />
+                        <Text style={styles.sectionTitle}>Description</Text>
+                        <Text style={styles.descriptionText}>{auctionData.description}</Text>
+                        <View style={styles.divider} />
+                        {/* KẾT THÚC PHẦN CODE ĐƯỢC THÊM LẠI */}
+                        <Text style={styles.sectionTitle}>Bid History ({bidHistory.length} bids)</Text>
+                        {hasJoinedThisSession ? (
+                            <FlatList
+                                data={bidHistory}
+                                keyExtractor={item => item._id}
+                                renderItem={({ item }) => (
+                                    <View style={styles.historyItem}>
+                                        <Text style={styles.bidderName}>{item.username}</Text>
+                                        <Text style={styles.bidAmount}>{(item.price ?? 0).toLocaleString('vi-VN')} VND</Text>
+                                        <Text style={styles.bidTimestamp}>{new Date(item.created_at).toLocaleTimeString('vi-VN')}</Text>
+                                    </View>
+                                )}
+                                scrollEnabled={false}
+                            />
+                        ) : (
+                            <Text style={styles.placeholderText}>Join the auction to see bid history.</Text>
+                        )}
+                    </View>
+                </ScrollView>
+                <View style={styles.footer}>
+                    {isMyAuction ? (
+                        <View style={[styles.joinButton, styles.disabledButton]}>
+                            <Text style={styles.joinButtonText}>This is Your Auction</Text>
+                        </View>
+                    ) : isAuctionJoined && !hasJoinedThisSession ? (
+                        <View style={[styles.joinButton, styles.disabledButton]}>
+                            <Text style={styles.joinButtonText}>You are in another auction</Text>
+                        </View>
+                    ) : (
+                        <>
+                            {!hasJoinedThisSession ? (
+                                <>
+                                    {auctionLiveStatus === 'Ongoing' && (
+                                        <TouchableOpacity style={[styles.joinButton, isJoining && styles.disabledButton]} onPress={handleJoinAuction} disabled={isJoining}>
+                                            {isJoining ? <ActivityIndicator color="#fff" /> : <Text style={styles.joinButtonText}>Join Auction</Text>}
+                                        </TouchableOpacity>
+                                    )}
+                                    {auctionLiveStatus === 'Upcoming' && (
+                                        <View style={[styles.joinButton, styles.disabledButton]}>
+                                            <Text style={styles.joinButtonText}>Upcoming</Text>
+                                        </View>
+                                    )}
+                                    {auctionLiveStatus === 'Finished' && (
+                                        <View style={[styles.joinButton, styles.disabledButton]}>
+                                            <Text style={styles.joinButtonText}>Finished</Text>
+                                        </View>
+                                    )}
+                                </>
+                            ) : (
+
+                                <View style={styles.bidInputContainer}>
+                                    <TextInput
+                                        style={styles.input}
+                                        placeholder={`Bid > ${(auctionData.currentPrice ?? 0).toLocaleString('vi-VN')} VND`}
+                                        keyboardType="numeric"
+                                        value={bidAmount}
+                                        onChangeText={setBidAmount}
+                                    />
+                                    <TouchableOpacity style={styles.bidButton} onPress={handlePlaceBid}>
+                                        <Text style={styles.bidButtonText}>Place Bid</Text>
+                                    </TouchableOpacity>
                                 </View>
                             )}
-                            scrollEnabled={false}
-                        />
-                    ) : (
-                        <Text style={styles.placeholderText}>Join the auction to see bid history.</Text>
+                        </>
                     )}
                 </View>
-            </ScrollView>
-            <View style={styles.footer}>
-                {isMyAuction ? (
-                    <View style={[styles.joinButton, styles.disabledButton]}>
-                        <Text style={styles.joinButtonText}>This is Your Auction</Text>
-                    </View>
-                ) : isAuctionJoined && !hasJoinedThisSession ? (
-                    <View style={[styles.joinButton, styles.disabledButton]}>
-                        <Text style={styles.joinButtonText}>You are in another auction</Text>
-                    </View>
-                ) : (
-                    <>
-                        {!hasJoinedThisSession ? (
-                            <>
-                                {auctionLiveStatus === 'Ongoing' && (
-                                    <TouchableOpacity style={[styles.joinButton, isJoining && styles.disabledButton]} onPress={handleJoinAuction} disabled={isJoining}>
-                                        {isJoining ? <ActivityIndicator color="#fff" /> : <Text style={styles.joinButtonText}>Join Auction</Text>}
-                                    </TouchableOpacity>
-                                )}
-                                {auctionLiveStatus === 'Upcoming' && (
-                                    <View style={[styles.joinButton, styles.disabledButton]}>
-                                        <Text style={styles.joinButtonText}>Upcoming</Text>
-                                    </View>
-                                )}
-                                {auctionLiveStatus === 'Finished' && (
-                                    <View style={[styles.joinButton, styles.disabledButton]}>
-                                        <Text style={styles.joinButtonText}>Finished</Text>
-                                    </View>
-                                )}
-                            </>
-                        ) : (
-                            <View style={styles.bidInputContainer}>
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder={`Bid > ${(auctionData.currentPrice ?? 0).toLocaleString('vi-VN')} VND`}
-                                    keyboardType="numeric"
-                                    value={bidAmount}
-                                    onChangeText={setBidAmount}
-                                />
-                                <TouchableOpacity style={styles.bidButton} onPress={handlePlaceBid}>
-                                    <Text style={styles.bidButtonText}>Place Bid</Text>
-                                </TouchableOpacity>
-                            </View>
-                        )}
-                    </>
-                )}
-            </View>
-        </SafeAreaView>
+            </KeyboardAvoidingView>
+        </SafeAreaView >
     );
 }
 
