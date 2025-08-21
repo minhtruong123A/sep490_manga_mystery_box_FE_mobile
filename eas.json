@@ -11,7 +11,13 @@
     },
     "preview": {
       "distribution": "internal",
-      "channel": "preview"
+      "channel": "preview",
+      "env": {
+        "CS_API": "https://api.mmb.io.vn/cs",
+        "BACKUP_CS_API": "https://mmb-be-dotnet.onrender.com",
+        "PY_API": "https://api.mmb.io.vn/py",
+        "BACKUP_PY_API": "https://sep490-manga-mystery-box-pybe.onrender.com"
+      }
     },
     "production": {
       "autoIncrement": true,

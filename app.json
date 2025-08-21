@@ -14,7 +14,11 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.minhtruong123a.SEP490-FE-mobile",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -30,7 +34,11 @@
     "extra": {
       "eas": {
         "projectId": "027beabc-aaeb-478f-b6ce-6aed4796c009"
-      }
+      },
+      "CS_API": "@env.CS_API",
+      "BACKUP_CS_API": "@env.BACKUP_CS_API",
+      "PY_API": "@env.PY_API",
+      "BACKUP_PY_API": "@env.BACKUP_PY_API"
     },
     "runtimeVersion": {
       "policy": "appVersion"
