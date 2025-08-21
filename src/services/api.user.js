@@ -237,7 +237,10 @@ export const createWithdrawTransaction = async (amount) => {
     });
     return response.data;
   } catch (error) {
+    if (error.response?.data) {
+      return error.response.data;
+    }
     console.error("Error creating withdraw transaction:", error);
-    return null;
+    return { status: false, error: error.message || "Unknown error" };
   }
 };
