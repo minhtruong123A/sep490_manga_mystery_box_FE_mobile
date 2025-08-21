@@ -60,10 +60,10 @@ export default function WithdrawRequest() {
             Alert.alert("Invalid Input", "Please enter a valid number.");
             return;
         }
-        if (withdrawAmount < 1000) {
-            Alert.alert("Invalid Amount", "Withdrawal amount must be at least 1,000 đ.");
-            return;
-        }
+        // if (withdrawAmount < 1000) {
+        //     Alert.alert("Invalid Amount", "Withdrawal amount must be at least 1,000 đ.");
+        //     return;
+        // }
         if (balance !== null && withdrawAmount > balance) {
             Alert.alert("Insufficient Funds", "Amount exceeds your current balance.");
             return;
@@ -83,8 +83,9 @@ export default function WithdrawRequest() {
                 ]);
             }
             // Case 2: Lỗi logic từ server (ví dụ: chưa có tài khoản ngân hàng)
-            else if (response && !response.status && response.error) {
-                if (response.error.toLowerCase().includes("bank account")) {
+            else if (response && !response.status) {
+                const serverMessage = response.error || response.data?.message || "An unknown error occurred.";
+                if (serverMessage.toLowerCase().includes("bank account")) {
                     Alert.alert(
                         "Bank Account Required",
                         "You must add a bank account before requesting a withdrawal.",
@@ -94,8 +95,7 @@ export default function WithdrawRequest() {
                         ]
                     );
                 } else {
-                    // Các lỗi logic khác
-                    throw new Error(response.error);
+                    Alert.alert("Request Failed", serverMessage);
                 }
             }
             // Case 3: Lỗi không xác định
