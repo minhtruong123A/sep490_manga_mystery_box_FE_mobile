@@ -1,7 +1,9 @@
 import axios from "axios";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { navigate } from '../navigation/RootNavigation';
-import { CS_API, BACKUP_CS_API, PY_API, BACKUP_PY_API } from '@env';
+// import { CS_API, BACKUP_CS_API, PY_API, BACKUP_PY_API } from '@env';
+import Constants from 'expo-constants'; // <-- THÊM DÒNG NÀY
+import { CS_API as LOCAL_CS_API, BACKUP_CS_API as LOCAL_BACKUP_CS_API, PY_API as LOCAL_PY_API, BACKUP_PY_API as LOCAL_BACKUP_PY_API } from '@env';
 
 // Lấy API URL từ biến môi trường
 // const CS_API = "https://api.mmb.io.vn/cs";
@@ -9,6 +11,13 @@ import { CS_API, BACKUP_CS_API, PY_API, BACKUP_PY_API } from '@env';
 // const PY_API = "https://api.mmb.io.vn/py";
 // const BACKUP_PY_API = "https://sep490-manga-mystery-box-pybe.onrender.com";
 // Tạo instance Axios cho từng API
+
+const isBuild = Constants.expoConfig?.extra?.CS_API && !Constants.expoConfig.extra.CS_API.startsWith('@env');
+
+const CS_API = isBuild ? Constants.expoConfig.extra.CS_API : LOCAL_CS_API;
+const BACKUP_CS_API = isBuild ? Constants.expoConfig.extra.BACKUP_CS_API : LOCAL_BACKUP_CS_API;
+const PY_API = isBuild ? Constants.expoConfig.extra.PY_API : LOCAL_PY_API;
+const BACKUP_PY_API = isBuild ? Constants.expoConfig.extra.BACKUP_PY_API : LOCAL_BACKUP_PY_API;
 
 const primaryAxios = axios.create({
   baseURL: CS_API,
