@@ -34,7 +34,8 @@ export default function ShoppingCart() {
       }
       setError(null);
     } catch (err: any) {
-      setError(err.message || "An error occurred.");
+      setCartData(null);
+      // setError(err.message || "An error occurred.");
     } finally {
       setLoading(false);
     }

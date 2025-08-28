@@ -59,6 +59,7 @@ export default function AuctionDetail({ route }: RootStackScreenProps<'AuctionDe
                         };
                     })
                 );
+                processedHistory.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
                 setBidHistory(processedHistory);
             }
         } catch (error) {
