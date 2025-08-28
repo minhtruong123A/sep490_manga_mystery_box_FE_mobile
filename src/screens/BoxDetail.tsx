@@ -111,8 +111,9 @@ export default function BoxDetail({ route }: ShopStackScreenProps<'Box Detail'>)
       } else {
         throw new Error(response.error || "Failed to complete purchase.");
       }
+
     } catch (err: any) {
-      Alert.alert("Purchase Failed", err.message || "An error occurred.");
+      Alert.alert("Purchase Failed", err.error || "An error occurred.");
     } finally {
       setIsBuyingNow(false);
     }

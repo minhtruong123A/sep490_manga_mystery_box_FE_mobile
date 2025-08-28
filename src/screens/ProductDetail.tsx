@@ -58,7 +58,7 @@ const ReportModal = ({ visible, onClose, onSubmit }: { visible: boolean, onClose
   const [content, setContent] = useState('');
   const handleSubmit = () => {
     if (!title.trim() || !content.trim()) {
-      Alert.alert("Lỗi", "Vui lòng nhập cả tiêu đề và nội dung báo cáo.");
+      Alert.alert("Error", "Please enter both the title and the content of the report.");
       return;
     }
     onSubmit(title, content);
@@ -173,7 +173,7 @@ export default function ProductDetail({ route }: ShopStackScreenProps<'Collectio
       }
     } catch (err: any) {
       // Khối catch này giờ sẽ bắt các lỗi được throw từ trên và lỗi mạng/server
-      const errorMessage = err.message || "An error occurred during purchase.";
+      const errorMessage = err.error || "An error occurred during purchase.";
 
       // Logic xử lý 'out of stock' vẫn hữu ích và nên giữ lại
       if (errorMessage.toLowerCase().includes("out of stock or no longer available")) {

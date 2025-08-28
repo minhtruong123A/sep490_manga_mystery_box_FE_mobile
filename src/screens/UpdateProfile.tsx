@@ -163,6 +163,32 @@ export default function UpdateProfile() {
       return Alert.alert("Error", "If a bank is selected, account name and number are required.");
     }
 
+    if (form.phoneNumber.trim() && !/^0\d{9}$/.test(form.phoneNumber.trim())) {
+      return Alert.alert("Error", "Phone number must be 10 digits and start with 0.");
+    }
+
+    const nameValue = form.accountBankName?.trim() ?? "";
+    if (!nameValue) {
+      return Alert.alert("Error", "Please enter account holder name.");
+    }
+    if (!/^[a-zA-ZÀ-ỹ\s]+$/.test(nameValue)) {
+      return Alert.alert("Error", "Account holder name can only contain letters.");
+    }
+    if (nameValue.length > 50) {
+      return Alert.alert("Error", "Account holder name must not exceed 50 characters.");
+    }
+
+    const bankNumValue = form.bankNumber?.trim() ?? "";
+    if (!bankNumValue) {
+      return Alert.alert("Error", "Please enter bank account number.");
+    }
+    if (!/^\d+$/.test(bankNumValue)) {
+      return Alert.alert("Error", "Bank account number must contain only digits.");
+    }
+    if (bankNumValue.length > 22) {
+      return Alert.alert("Error", "Bank account number must not exceed 22 digits.");
+    }
+
     // Kiểm tra xem thông tin ngân hàng có thay đổi không
     const bankDetailsChanged =
       (profile?.accountBankName || '') !== form.accountBankName ||
