@@ -135,6 +135,7 @@ export default function Chatbox({ route }: RootStackScreenProps<'Chatbox'>) {
                         const messageWithId: ChatMessage = {
                             ...newMessage,
                             _id: `ws-${Date.now()}-${Math.random()}`, // Tạo ID tạm thời, duy nhất
+                            created_at: new Date().toISOString(),
                         };
                         setMessages(previousMessages => [messageWithId, ...previousMessages]);
                     }

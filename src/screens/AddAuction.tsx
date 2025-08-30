@@ -166,7 +166,8 @@ export default function AddAuction() {
             }
             // Lấy item cuối cùng trong danh sách (là item mới nhất)
             const newAuctionSession = myListRes.data[myListRes.data.length - 1];
-            const auctionSessionId = newAuctionSession._id;
+            // const auctionSessionId = newAuctionSession._id;
+            const auctionSessionId = newAuctionSession.id;
 
             if (!auctionSessionId) throw new Error("Auction session ID not found after creation.");
 
