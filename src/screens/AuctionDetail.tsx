@@ -184,6 +184,10 @@ export default function AuctionDetail({ route }: RootStackScreenProps<'AuctionDe
         // Nếu người dùng đang ở trong phiên này và trạng thái toàn cục chuyển thành false (hết đấu giá)
         if (hasJoinedThisSession && !isAuctionJoined) {
             const checkWinnerAndNotify = async () => {
+                socketRef.current?.close();
+                setHasJoinedThisSession(false);
+                await AsyncStorage.removeItem(PENDING_AUCTION_KEY);
+
                 const latestHistory = await getBidAuction(auctionData!.auctionSessionId);
                 const winner = latestHistory.data?.[0];
                 const alertMessage = winner && winner.user_id === currentUser?.id
@@ -205,20 +209,12 @@ export default function AuctionDetail({ route }: RootStackScreenProps<'AuctionDe
         return () => socketRef.current?.close();
     }, []);
 
-
-    useEffect(() => {
-        return () => {
-            // Chỉ cần đóng socket khi thoát màn hình
-            socketRef.current?.close();
-        };
-    }, []);
-
     // HÀM ĐÃ ĐƯỢC VIẾT LẠI THEO LOGIC MỚI
     const handleJoinAuction = async () => {
         if (!auctionData) return;
         Alert.alert(
             "Join Auction",
-            "Are you sure you want to join this auction? For the next 15 minutes, you will not be able to purchase items or request withdrawals. Do you want to continue?",
+            "Are you sure you want to join this auction? Until the auction ends, you will not be able to purchase items or request withdrawals. Do you want to continue?",
             [
                 { text: "Cancel", style: 'cancel' },
                 {
