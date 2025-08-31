@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -17,7 +17,7 @@ import { getMysteryBoxDetail, buyMysteryBox } from '../services/api.mysterybox';
 import { buildImageUrl } from '../services/api.imageproxy';
 import { addToCart } from '../services/api.cart'; // THÊM MỚI
 import CartIconOutline from '../../assets/icons/cart_outline.svg'; // THÊM MỚI
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext'; // THÊM MỚI
 
 
@@ -53,70 +53,146 @@ export default function BoxDetail({ route }: ShopStackScreenProps<'Box Detail'>)
   const [isBuyingNow, setIsBuyingNow] = useState(false);
 
   // THÊM MỚI: useEffect để gọi API chi tiết sản phẩm
-  useEffect(() => {
-    if (!boxId) {
-      setError('Box ID is missing.');
-      setLoading(false);
-      return;
-    }
+  // useEffect(() => {
+  //   if (!boxId) {
+  //     setError('Box ID is missing.');
+  //     setLoading(false);
+  //     return;
+  //   }
 
-    const fetchDetail = async () => {
-      try {
-        setLoading(true);
-        const response = await getMysteryBoxDetail(boxId);
-        // API trả về { status, data, ...}, data là một object
-        if (response.status && response.data) {
-          setBox(response.data);
-        } else {
-          throw new Error('Invalid data format for box detail');
+  //   const fetchDetail = async () => {
+  //     try {
+  //       setLoading(true);
+  //       const response = await getMysteryBoxDetail(boxId);
+  //       // API trả về { status, data, ...}, data là một object
+  //       if (response.status && response.data) {
+  //         setBox(response.data);
+  //       } else {
+  //         throw new Error('Invalid data format for box detail');
+  //       }
+  //       setError(null);
+  //     } catch (err: any) {
+  //       setError(err.message || 'Failed to fetch box details.');
+  //       console.error(err);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+
+  //   fetchDetail();
+  // }, [boxId]); // Phụ thuộc vào boxId, sẽ chạy lại nếu boxId thay đổi
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchDetail = async () => {
+        try {
+          setLoading(true);
+          const response = await getMysteryBoxDetail(boxId);
+
+          if (response.status && response.data) {
+            if (response.data.status === 0) {
+              throw new Error("This Mystery Box is currently unavailable.");
+            }
+            setBox(response.data);
+          } else {
+            throw new Error(response.error || 'Invalid data format for box detail');
+          }
+          setError(null);
+        } catch (err: any) {
+          setError(err.message || 'Failed to fetch box details.');
+        } finally {
+          setLoading(false);
         }
-        setError(null);
-      } catch (err: any) {
-        setError(err.message || 'Failed to fetch box details.');
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDetail();
-  }, [boxId]); // Phụ thuộc vào boxId, sẽ chạy lại nếu boxId thay đổi
+      };
+      fetchDetail();
+    }, [boxId])
+  );
 
   // --- Handlers ---
-  const handleAddToCart = async () => {
-    if (isAddingToCart || !box) return;
-    setIsAddingToCart(true);
+  // const handleAddToCart = async () => {
+  //   if (isAddingToCart || !box) return;
+  //   setIsAddingToCart(true);
+  //   try {
+  //     const response = await addToCart({ sellProductId: "", mangaBoxId: box.id, quantity });
+  //     if (response.status) {
+  //       Alert.alert("Success", `${box.mysteryBoxName} (x${quantity}) has been added to your cart.`);
+  //     } else {
+  //       throw new Error(response.error || "Failed to add to cart.");
+  //     }
+  //   } catch (err: any) {
+  //     Alert.alert("Error", err.message || "An error occurred.");
+  //   } finally {
+  //     setIsAddingToCart(false);
+  //   }
+  // };
+
+  // const handleBuyNow = async () => {
+  //   if (isBuyingNow || !box) return;
+  //   setIsBuyingNow(true);
+  //   try {
+  //     const response = await buyMysteryBox({ mangaBoxId: box.id, quantity });
+  //     if (response.status) {
+  //       Alert.alert("Purchase Successful!", "Thank you for your purchase. Check your collection for new items.");
+  //       navigation.navigate('OrderHistory');
+  //     } else {
+  //       throw new Error(response.error || "Failed to complete purchase.");
+  //     }
+
+  //   } catch (err: any) {
+  //     Alert.alert("Purchase Failed", err.error || "An error occurred.");
+  //   } finally {
+  //     setIsBuyingNow(false);
+  //   }
+  // };
+
+  const handleAction = async (action: 'buy' | 'add') => {
+    if (!box) return;
+
+    if (action === 'buy') setIsBuyingNow(true);
+    else setIsAddingToCart(true);
+
     try {
-      const response = await addToCart({ sellProductId: "", mangaBoxId: box.id, quantity });
-      if (response.status) {
-        Alert.alert("Success", `${box.mysteryBoxName} (x${quantity}) has been added to your cart.`);
-      } else {
-        throw new Error(response.error || "Failed to add to cart.");
+      const latestDetails = await getMysteryBoxDetail(box.id);
+
+      if (latestDetails.status && latestDetails.data?.status === 0) {
+        handleUnavailableItem(box.id);
+        return;
+      }
+
+      if (action === 'buy') {
+        const response = await buyMysteryBox({ mangaBoxId: box.id, quantity });
+        if (response.status) {
+          Alert.alert("Purchase Successful!", "Thank you for your purchase.");
+          navigation.navigate('OrderHistory');
+        } else {
+          throw new Error(response.error || "Failed to complete purchase.");
+        }
+      } else { // action === 'add'
+        const response = await addToCart({ sellProductId: "", mangaBoxId: box.id, quantity });
+        if (response.status) {
+          Alert.alert("Success", `${box.mysteryBoxName} (x${quantity}) has been added to your cart.`);
+        } else {
+          throw new Error(response.error || "Failed to add to cart.");
+        }
       }
     } catch (err: any) {
-      Alert.alert("Error", err.message || "An error occurred.");
+      Alert.alert("Error", err.message || "An unexpected error occurred.");
     } finally {
-      setIsAddingToCart(false);
+      if (action === 'buy') setIsBuyingNow(false);
+      else setIsAddingToCart(false);
     }
   };
 
-  const handleBuyNow = async () => {
-    if (isBuyingNow || !box) return;
-    setIsBuyingNow(true);
-    try {
-      const response = await buyMysteryBox({ mangaBoxId: box.id, quantity });
-      if (response.status) {
-        Alert.alert("Purchase Successful!", "Thank you for your purchase. Check your collection for new items.");
-        navigation.navigate('OrderHistory');
-      } else {
-        throw new Error(response.error || "Failed to complete purchase.");
-      }
-
-    } catch (err: any) {
-      Alert.alert("Purchase Failed", err.error || "An error occurred.");
-    } finally {
-      setIsBuyingNow(false);
-    }
+  const handleUnavailableItem = (boxId: string) => {
+    Alert.alert(
+      "Item No Longer Available",
+      "This box has been temporarily locked by a moderator.",
+      [{
+        text: "OK", onPress: () => {
+          navigation.navigate("MainTabs", { screen: "Shop", params: { screen: "Shop", params: { screen: "Mystery Box" } } });
+        }
+      }]
+    );
   };
 
   // SỬA LỖI 1: Tách hàm xử lý tăng số lượng để thêm logic giới hạn
@@ -204,7 +280,7 @@ export default function BoxDetail({ route }: ShopStackScreenProps<'Box Detail'>)
         <View style={styles.leftActions}>
           <TouchableOpacity
             style={styles.iconButton}
-            onPress={handleAddToCart}
+            onPress={() => handleAction('add')}
             disabled={isAddingToCart || isBuyingNow}
           >
             {isAddingToCart ?
@@ -216,7 +292,7 @@ export default function BoxDetail({ route }: ShopStackScreenProps<'Box Detail'>)
         </View>
         <TouchableOpacity
           style={[styles.buyButton, (isBuyingNow || isAddingToCart || isAuctionJoined) && styles.disabledButton]}
-          onPress={handleBuyNow}
+          onPress={() => handleAction('buy')}
           disabled={isBuyingNow || isAddingToCart || isAuctionJoined}
         >
           {isBuyingNow ?

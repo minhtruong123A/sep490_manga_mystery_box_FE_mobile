@@ -15,6 +15,7 @@ type AuthContextType = {
     isAuthenticated: boolean;
     isAuctionJoined: boolean;
     setIsAuctionJoinedManually: (status: boolean) => void; // Thêm hàm này
+    setAuctionStatus: (isJoined: boolean) => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -27,13 +28,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     console.log(`[AuthContext] Trạng thái đấu giá toàn cục hiện tại: ${isAuctionJoined}`);
     const pollingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-    const stopGlobalPolling = useCallback(() => {
+    const stopGlobalPolling = useCallback(async (shouldRemoveStorage = true) => {
         if (pollingTimerRef.current) {
             clearInterval(pollingTimerRef.current);
             pollingTimerRef.current = null;
         }
         setIsAuctionJoined(false);
-    }, []);
+        if (shouldRemoveStorage && user) {
+            await AsyncStorage.removeItem(`pendingAuction_${user.id}`);
+        }
+    }, [user]);
 
     const startGlobalPolling = useCallback(() => {
         if (pollingTimerRef.current) return;
@@ -46,28 +50,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 console.log(" stopping.");
                 if (auctionStatusRes.success && auctionStatusRes.data?.[0] === false) {
                     console.log("✅ [Polling] Người dùng không còn trong phiên đấu giá. Đã dừng kiểm tra.");
-                    stopGlobalPolling();
+                    stopGlobalPolling(true);
                     if (user) await AsyncStorage.removeItem(`pendingAuction_${user.id}`);
                 }
             } catch (e) {
                 console.error("Global polling failed, stopping.", e);
-                stopGlobalPolling();
+                stopGlobalPolling(true);
             }
         }, 60000);
         pollingTimerRef.current = intervalId;
     }, [user, stopGlobalPolling]);
+
+    const setAuctionStatus = useCallback((isJoined: boolean) => {
+        if (isJoined) {
+            startGlobalPolling();
+        } else {
+            stopGlobalPolling(true);
+        }
+    }, [startGlobalPolling, stopGlobalPolling]);
 
     const setIsAuctionJoinedManually = useCallback((status: boolean) => {
         setIsAuctionJoined(status);
     }, []);
 
     const logout = useCallback(async () => {
-        stopGlobalPolling();
-        if (user) await AsyncStorage.removeItem(`pendingAuction_${user.id}`);
+        stopGlobalPolling(false);
+        // if (user) await AsyncStorage.removeItem(`pendingAuction_${user.id}`);
         await AsyncStorage.multiRemove(['userToken', 'refreshToken']);
         setUserToken(null);
         setUser(null);
-    }, [user, stopGlobalPolling]);
+    }, [stopGlobalPolling]);
 
     const login = async (accessToken: string, refreshToken: string) => {
         try {
@@ -136,7 +148,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         logout,
         isAuctionJoined,
         setIsAuctionJoinedManually, // Thêm hàm này vào value
-    }), [userToken, user, isLoading, isAuctionJoined, login, logout, setIsAuctionJoinedManually]);
+        setAuctionStatus,
+    }), [userToken, user, isLoading, isAuctionJoined, login, logout, setIsAuctionJoinedManually, setAuctionStatus]);
 
     if (isLoading) {
         return (

@@ -175,6 +175,7 @@ export default function MyAuctions() {
                         } catch { return { ...auction, seller: null }; }
                     })
                 );
+                auctionsWithSellers.reverse();
                 setHostedAuctions(auctionsWithSellers);
             } else {
                 console.error("Failed to fetch 'Hosted' auctions:", hostedRes.status === 'rejected' ? hostedRes.reason : hostedRes.value.error);
@@ -191,6 +192,7 @@ export default function MyAuctions() {
                         } catch { return { ...auction, seller: null }; }
                     })
                 );
+                auctionsWithSellers.reverse();
                 setMyBids(auctionsWithSellers);
             } else {
                 console.error("Failed to fetch 'My Bids' auctions:", bidsRes.status === 'rejected' ? bidsRes.reason : bidsRes.value.error);
@@ -214,6 +216,7 @@ export default function MyAuctions() {
                         };
                     })
                 );
+                enrichedWinners.reverse();
                 setWinners(enrichedWinners);
             } else {
                 console.error("Failed to fetch 'Winners' auctions:", winnerRes.status === 'rejected' ? winnerRes.reason : winnerRes.value.error);
