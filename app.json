@@ -5,7 +5,7 @@
     "slug": "SEP490_FE_mobile",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/mmboxlogo.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
@@ -22,7 +22,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/mmboxlogo.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
