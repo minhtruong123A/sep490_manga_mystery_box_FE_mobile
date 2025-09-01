@@ -36,6 +36,7 @@ export default function BoxShop({ navigation }: ShopTopTabScreenProps<'Mystery B
       const response = await getAllMysteryBoxes();
       if (response.status && Array.isArray(response.data)) {
         const activeBoxes = response.data.filter((box: MysteryBoxItem) => box.status === 1);
+        activeBoxes.reverse();
         setBoxes(activeBoxes);
       } else {
         throw new Error('Invalid data format received from API');

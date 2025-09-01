@@ -43,7 +43,18 @@ const ProductItem: React.FC<ProductItemProps> = ({ item, onPress, isNew }) => {
                         {capitalizeFirstLetter(item.rarityName)}
                     </Text>
                 </View>
-                <Text style={styles.itemPrice}>{item.price.toLocaleString('vi-VN')} VND</Text>
+                <View>
+                    {item.username && (
+                        <Text style={styles.sellerText} numberOfLines={1}>by {item.username}</Text>
+                    )}
+                    {item.createdAt && (
+                        <Text style={styles.dateText}>
+                            Posted on: {new Date(item.createdAt).toLocaleDateString('vi-VN')}
+                        </Text>
+                    )}
+                    <Text style={styles.itemPrice}>{item.price.toLocaleString('vi-VN')} VND</Text>
+                </View>
+                {/* <Text style={styles.itemPrice}>{item.price.toLocaleString('vi-VN')} VND</Text> */}
             </View>
         </TouchableOpacity>
     );
@@ -71,10 +82,12 @@ const styles = StyleSheet.create({
         backgroundColor: '#f8f8f8',
     },
     itemInfo: {
+        flex: 1, // Đảm bảo nó chiếm hết không gian còn lại
         padding: 12,
+        justifyContent: 'space-between', // Đẩy phần giá xuống dưới cùng
     },
     itemName: {
-        fontSize: 14,
+        fontSize: 13,
         fontFamily: 'Oxanium-SemiBold',
         color: '#333',
         height: 34, // Đảm bảo 2 dòng
@@ -120,6 +133,18 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontFamily: 'Oxanium-Bold',
         fontSize: 14,
+    },
+    sellerText: {
+        fontSize: 12,
+        fontFamily: 'Oxanium-Regular',
+        color: '#888',
+        marginBottom: 2,
+    },
+    dateText: {
+        fontSize: 11,
+        fontFamily: 'Oxanium-Regular',
+        color: '#aaa',
+        marginBottom: 4,
     },
 });
 

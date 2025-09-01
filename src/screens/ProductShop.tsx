@@ -38,10 +38,10 @@ export default function CollectionStore({ navigation }: ShopTopTabScreenProps<'C
       ]);
 
       if (allRes.status && Array.isArray(allRes.data)) {
-        setAllProducts(allRes.data.filter((p: any) => p.quantity > 0 && p.isSell));
+        setAllProducts(allRes.data.filter((p: any) => p.quantity > 0 && p.isSell).reverse());
       }
       if (suggestionRes.status && Array.isArray(suggestionRes.data)) {
-        setSuggestionProducts(suggestionRes.data.filter((p: any) => p.quantity > 0 && p.isSell));
+        setSuggestionProducts(suggestionRes.data.filter((p: any) => p.quantity > 0 && p.isSell).reverse());
       }
       setError(null);
     } catch (err: any) {
