@@ -118,41 +118,95 @@ export default function ExchangeRequests() {
         });
     }, [requests, sortOrder]);
 
+    // const handleResponse = async (id: string, response: 'Accepted' | 'Rejected') => {
+    //     setIsSubmitting(id);
+    //     try {
+    //         // --- XỬ LÝ TRƯỜNG HỢP ACCEPT ---
+    //         if (response === 'Accepted') {
+    //             const apiResponse = await ExchangeAccept(id);
+
+    //             // Backend trả về object với thuộc tính 'Success' (chữ S viết hoa)
+    //             //if (apiResponse.Success) {
+    //             if (apiResponse.status) {
+    //                 Alert.alert("Success", apiResponse.Data || "Request has been accepted.");
+    //                 await loadData(); // Tải lại danh sách
+    //             } else {
+    //                 // Lỗi logic nghiệp vụ từ backend
+    //                 Alert.alert("Operation Failed", apiResponse.Error || "Failed to accept request.");
+    //                 await loadData(); // Tải lại danh sách để xóa yêu cầu lỗi thời
+    //             }
+    //         }
+    //         // --- XỬ LÝ TRƯỜNG HỢP REJECT ---
+    //         else {
+    //             // API Reject thành công sẽ trả về chuỗi "Rejected".
+    //             // Nếu thất bại, nó sẽ ném ra lỗi và được khối catch ở dưới bắt.
+    //             const apiResponse = await ExchangeReject(id);
+
+    //             // Nếu code chạy đến đây mà không bị lỗi, nghĩa là đã thành công.
+    //             // Alert.alert("Success", "Request has been rejected.");
+    //             if (apiResponse === "Rejected") {
+    //                 Alert.alert("Success", "Request has been rejected.");
+    //             } else {
+    //                 Alert.alert("Operation Failed", apiResponse || "Reject failed.");
+    //             }
+    //             await loadData();
+    //         }
+    //     } catch (error: any) {
+    //         // Khối catch này sẽ bắt lỗi của API Reject (400 Bad Request)
+    //         // và các lỗi mạng/server khác cho cả 2 API.
+    //         const errorMessage = error.response?.data || error.message || "An unknown error occurred.";
+    //         Alert.alert("Error", errorMessage);
+    //     } finally {
+    //         setIsSubmitting(null);
+    //     }
+    // };
+
     const handleResponse = async (id: string, response: 'Accepted' | 'Rejected') => {
-        setIsSubmitting(id);
-        try {
-            // --- XỬ LÝ TRƯỜNG HỢP ACCEPT ---
-            if (response === 'Accepted') {
-                const apiResponse = await ExchangeAccept(id);
+        const confirmMessage =
+            response === 'Accepted'
+                ? "Are you sure you want to accept? You will be responsible for your action and this cannot be undone."
+                : "Are you sure you want to reject? You will be responsible for your action and this cannot be undone.";
 
-                // Backend trả về object với thuộc tính 'Success' (chữ S viết hoa)
-                if (apiResponse.Success) {
-                    Alert.alert("Success", apiResponse.Data || "Request has been accepted.");
-                    await loadData(); // Tải lại danh sách
-                } else {
-                    // Lỗi logic nghiệp vụ từ backend
-                    Alert.alert("Operation Failed", apiResponse.Error || "Failed to accept request.");
-                    await loadData(); // Tải lại danh sách để xóa yêu cầu lỗi thời
-                }
-            }
-            // --- XỬ LÝ TRƯỜNG HỢP REJECT ---
-            else {
-                // API Reject thành công sẽ trả về chuỗi "Rejected".
-                // Nếu thất bại, nó sẽ ném ra lỗi và được khối catch ở dưới bắt.
-                await ExchangeReject(id);
-
-                // Nếu code chạy đến đây mà không bị lỗi, nghĩa là đã thành công.
-                Alert.alert("Success", "Request has been rejected.");
-                await loadData();
-            }
-        } catch (error: any) {
-            // Khối catch này sẽ bắt lỗi của API Reject (400 Bad Request)
-            // và các lỗi mạng/server khác cho cả 2 API.
-            const errorMessage = error.response?.data || error.message || "An unknown error occurred.";
-            Alert.alert("Error", errorMessage);
-        } finally {
-            setIsSubmitting(null);
-        }
+        Alert.alert(
+            "Confirmation",
+            confirmMessage,
+            [
+                {
+                    text: "Cancel",
+                    style: "cancel",
+                },
+                {
+                    text: "Confirm",
+                    onPress: async () => {
+                        setIsSubmitting(id);
+                        try {
+                            if (response === 'Accepted') {
+                                const apiResponse = await ExchangeAccept(id);
+                                if (apiResponse.status) {
+                                    Alert.alert("Success", apiResponse.data || "Request has been accepted.");
+                                } else {
+                                    Alert.alert("Operation Failed", apiResponse.error || "Failed to accept request.");
+                                }
+                            } else {
+                                const apiResponse = await ExchangeReject(id);
+                                if (apiResponse === "Rejected") {
+                                    Alert.alert("Success", "Request has been rejected.");
+                                } else {
+                                    Alert.alert("Operation Failed", apiResponse || "Reject failed.");
+                                }
+                            }
+                            await loadData();
+                        } catch (error: any) {
+                            const errorMessage = error.response?.data || error.message || "An unknown error occurred.";
+                            Alert.alert("Error", errorMessage);
+                        } finally {
+                            setIsSubmitting(null);
+                        }
+                    },
+                },
+            ],
+            { cancelable: true }
+        );
     };
 
     const renderItem = ({ item }: { item: ProcessedExchangeRequest }) => {

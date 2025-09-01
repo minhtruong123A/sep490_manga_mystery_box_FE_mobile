@@ -141,6 +141,7 @@ const pythonApiWithFallback = async (config) => {
     return await backupPythonAxios(config);
   }
 };
+//export const PYTHON_API_BASE_URL = 'https://sep490-manga-mystery-box-pybe.onrender.com/py';
 export const PYTHON_API_BASE_URL = 'https://api.mmb.io.vn/py';
 export const BACKUP_PYTHON_API_BASE_URL = 'https://sep490-manga-mystery-box-pybe.onrender.com';
 // export const api = PYTHON_API_BASE_URL;

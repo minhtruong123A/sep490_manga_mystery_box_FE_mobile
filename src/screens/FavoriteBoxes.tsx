@@ -16,7 +16,7 @@ import { useAuth } from '../context/AuthContext'; // THÊM MỚI
 // --- Types, APIs, Components ---
 import { CartBoxItem } from '../types/types';
 import { removeFromCart, clearAllCart } from '../services/api.cart'; // API riêng cho box
-import { buyMysteryBox } from '../services/api.mysterybox'
+import { buyMysteryBox, getMysteryBoxDetail } from '../services/api.mysterybox'
 import ApiImage from '../components/ApiImage';
 import CartIcon from '../../assets/icons/cart_outline.svg';
 
@@ -43,7 +43,9 @@ const QuantitySelector = ({ quantity, onDecrease, onIncrease }: { quantity: numb
 export default function FavoriteBoxes({ boxes, refreshCart }: { boxes: CartBoxItem[], refreshCart: () => void }) {
   // --- State Management ---
   const [cartBoxes, setCartBoxes] = useState(boxes);
-  const { isAuctionJoined } = useAuth();
+  const { user: currentUser, isAuctionJoined } = useAuth();
+  const FAVORITE_BOXES_KEY = `favorite_boxes_${currentUser?.id}`;
+
   const [selectedItems, setSelectedItems] = useState<Map<string, number>>(new Map());
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   // THÊM MỚI: State và logic cho "Yêu thích"
@@ -55,16 +57,17 @@ export default function FavoriteBoxes({ boxes, refreshCart }: { boxes: CartBoxIt
 
     // CẬP NHẬT: Load và dọn dẹp danh sách yêu thích
     const loadFavorites = async () => {
+      if (!currentUser) return;
       try {
-        const stored = await AsyncStorage.getItem('favorite_boxes'); // Key khác
+        const stored = await AsyncStorage.getItem(FAVORITE_BOXES_KEY);
         if (stored) {
           const favsFromStorage: string[] = JSON.parse(stored);
           const validFavs = favsFromStorage.filter(id =>
-            boxes.some(b => b.mangaBoxId === id)
+            boxes.some(b => b.cartBoxId === id)
           );
           setFavoriteIds(new Set(validFavs));
           if (validFavs.length !== favsFromStorage.length) {
-            await AsyncStorage.setItem('favorite_boxes', JSON.stringify(validFavs));
+            await AsyncStorage.setItem(FAVORITE_BOXES_KEY, JSON.stringify(validFavs));
           }
         }
       } catch (e) {
@@ -84,23 +87,37 @@ export default function FavoriteBoxes({ boxes, refreshCart }: { boxes: CartBoxIt
     if (selectionChanged) {
       setSelectedItems(newSelected);
     }
-  }, [boxes]);
+  }, [boxes, currentUser, FAVORITE_BOXES_KEY]);
 
+  // useEffect(() => {
+  //   if (favoriteIds.size === 0 || selectedItems.size === 0) return;
+  //   const newSelected = new Map(selectedItems);
+  //   let changed = false;
+  //   for (const id of Array.from(newSelected.keys())) {
+  //     if (favoriteIds.has(id)) {
+  //       newSelected.delete(id);
+  //       changed = true;
+  //     }
+  //   }
+  //   if (changed) setSelectedItems(newSelected);
+  // }, [favoriteIds]);
   useEffect(() => {
-    if (favoriteIds.size === 0 || selectedItems.size === 0) return;
     const newSelected = new Map(selectedItems);
     let changed = false;
-    for (const id of Array.from(newSelected.keys())) {
-      if (favoriteIds.has(id)) {
-        newSelected.delete(id);
+    for (const favId of Array.from(favoriteIds)) {
+      const favoritedItem = cartBoxes.find(p => p.cartBoxId === favId);
+      if (favoritedItem && newSelected.has(favoritedItem.mangaBoxId)) {
+        newSelected.delete(favoritedItem.mangaBoxId);
         changed = true;
       }
     }
-    if (changed) setSelectedItems(newSelected);
-  }, [favoriteIds]);
+    if (changed) {
+      setSelectedItems(newSelected);
+    }
+  }, [favoriteIds, cartBoxes]);
 
   const selectableItems = useMemo(
-    () => cartBoxes.filter(item => !favoriteIds.has(item.mangaBoxId)),
+    () => cartBoxes.filter(item => !favoriteIds.has(item.cartBoxId)),
     [cartBoxes, favoriteIds]
   );
 
@@ -115,12 +132,12 @@ export default function FavoriteBoxes({ boxes, refreshCart }: { boxes: CartBoxIt
       newFavs.add(id);
     }
     setFavoriteIds(newFavs);
-    await AsyncStorage.setItem('favorite_boxes', JSON.stringify(Array.from(newFavs)));
+    await AsyncStorage.setItem(FAVORITE_BOXES_KEY, JSON.stringify(Array.from(newFavs)));
   };
 
 
   const handleToggleSelection = (item: CartBoxItem) => {
-    if (favoriteIds.has(item.mangaBoxId)) return;
+    if (favoriteIds.has(item.cartBoxId)) return;
 
     const newSelected = new Map(selectedItems);
     if (newSelected.has(item.mangaBoxId)) {
@@ -182,6 +199,24 @@ export default function FavoriteBoxes({ boxes, refreshCart }: { boxes: CartBoxIt
     );
   };
 
+  // const handleCheckout = async () => {
+  //   const itemsToBuy = Array.from(selectedItems.entries());
+  //   if (itemsToBuy.length === 0) {
+  //     Alert.alert("No items selected", "Please select items to checkout.");
+  //     return;
+  //   }
+
+  //   setIsCheckingOut(true);
+  //   // Dùng Promise.allSettled để không bị dừng lại khi có lỗi
+  //   await Promise.allSettled(
+  //     itemsToBuy.map(([mangaBoxId, quantity]) => buyMysteryBox({ mangaBoxId, quantity }))
+  //   );
+  //   setIsCheckingOut(false);
+
+  //   // Sau khi checkout, thông báo và làm mới giỏ hàng
+  //   Alert.alert("Checkout Complete", "Thank you for your purchase! Check your collection for new items.");
+  //   refreshCart();
+  // };
   const handleCheckout = async () => {
     const itemsToBuy = Array.from(selectedItems.entries());
     if (itemsToBuy.length === 0) {
@@ -190,16 +225,57 @@ export default function FavoriteBoxes({ boxes, refreshCart }: { boxes: CartBoxIt
     }
 
     setIsCheckingOut(true);
-    // Dùng Promise.allSettled để không bị dừng lại khi có lỗi
-    await Promise.allSettled(
-      itemsToBuy.map(([mangaBoxId, quantity]) => buyMysteryBox({ mangaBoxId, quantity }))
-    );
-    setIsCheckingOut(false);
+    try {
+      const statusChecks = await Promise.all(
+        itemsToBuy.map(([mangaBoxId]) => getMysteryBoxDetail(mangaBoxId))
+      );
 
-    // Sau khi checkout, thông báo và làm mới giỏ hàng
-    Alert.alert("Checkout Complete", "Thank you for your purchase! Check your collection for new items.");
-    refreshCart();
+      const bannedItems: CartBoxItem[] = [];
+      const validItemsToBuy: { mangaBoxId: string, quantity: number }[] = [];
+
+      statusChecks.forEach((response, index) => {
+        const [mangaBoxId, quantity] = itemsToBuy[index];
+        const itemInCart = cartBoxes.find(b => b.mangaBoxId === mangaBoxId)!;
+
+        if (response.status && response.data?.status === 0) {
+          bannedItems.push(itemInCart);
+        }
+        else if (response.status && response.data?.status === 1) {
+          validItemsToBuy.push({ mangaBoxId, quantity });
+        }
+      });
+
+      if (bannedItems.length > 0) {
+        const bannedNames = bannedItems.map(item => item.box.mysteryBoxName).join(', ');
+        Alert.alert(
+          "Item Unavailable",
+          `The following item(s) are no longer available and will be removed from your cart: ${bannedNames}`,
+          [{
+            text: "OK",
+            onPress: async () => {
+              await Promise.all(bannedItems.map(item => removeFromCart({ sellProductId: "", mangaBoxId: item.mangaBoxId })));
+              refreshCart();
+            }
+          }]
+        );
+        return;
+      }
+
+      if (validItemsToBuy.length > 0) {
+        await Promise.allSettled(
+          validItemsToBuy.map(payload => buyMysteryBox(payload))
+        );
+        Alert.alert("Checkout Complete", "Thank you for your purchase!");
+        refreshCart();
+      }
+
+    } catch (error) {
+      Alert.alert("Error", "An error occurred during checkout. Please try again.");
+    } finally {
+      setIsCheckingOut(false);
+    }
   };
+
 
   const handleToggleSelectAll = () => {
     if (selectedItems.size === selectableCount && selectableCount > 0) {
@@ -227,14 +303,14 @@ export default function FavoriteBoxes({ boxes, refreshCart }: { boxes: CartBoxIt
     const isSelected = selectedItems.has(item.mangaBoxId);
     const quantity = selectedItems.get(item.mangaBoxId) || 1;
     // THÊM MỚI: Kiểm tra item có được yêu thích không
-    const isFavorited = favoriteIds.has(item.mangaBoxId);
+    const isFavorited = favoriteIds.has(item.cartBoxId);
 
     return (
       <View style={styles.itemContainer}>
         {/* CẬP NHẬT: Thêm lại icon trái tim */}
         <TouchableOpacity
           style={styles.favoriteButton}
-          onPress={() => toggleFavorite(item.mangaBoxId)}
+          onPress={() => toggleFavorite(item.cartBoxId)}
         >
           <Ionicons
             name={isFavorited ? 'heart' : 'heart-outline'}
@@ -271,7 +347,7 @@ export default function FavoriteBoxes({ boxes, refreshCart }: { boxes: CartBoxIt
       <FlatList
         data={cartBoxes}
         renderItem={renderItem}
-        keyExtractor={(item) => item.mangaBoxId}
+        keyExtractor={(item) => item.cartBoxId}
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>

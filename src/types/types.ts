@@ -313,6 +313,7 @@ export type ProcessedExchangeRequest = ExchangeRequestItem & {
 
 // Kiểu dữ liệu cho một sản phẩm trong giỏ hàng (từ API viewCart)
 export type CartProductItem = {
+    cartProductId: string
     sellProductId: string;
     // product object bên trong có cấu trúc giống ProductOnSaleDetailItem
     product: ProductOnSaleDetailItem;
@@ -321,6 +322,7 @@ export type CartProductItem = {
 
 // Kiểu dữ liệu cho một box trong giỏ hàng (từ API viewCart)
 export type CartBoxItem = {
+    cartBoxId: string;
     mangaBoxId: string;
     // box object bên trong có cấu trúc giống MysteryBoxItem
     box: MysteryBoxItem;

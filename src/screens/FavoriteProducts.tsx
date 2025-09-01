@@ -43,7 +43,9 @@ const QuantitySelector = ({ quantity, onDecrease, onIncrease, maxQuantity }: { q
 // --- Màn hình chính ---
 export default function FavoriteProducts({ products, refreshCart }: { products: CartProductItem[], refreshCart: () => void }) {
     const navigation = useNavigation<RootStackNavigationProp>();
-    const { isAuctionJoined } = useAuth();
+    const { user: currentUser, isAuctionJoined } = useAuth();
+    const FAVORITE_PRODUCTS_KEY = `favorite_products_${currentUser?.id}`;
+
 
     // State nội bộ của component
     const [cartProducts, setCartProducts] = useState(products);
@@ -57,18 +59,19 @@ export default function FavoriteProducts({ products, refreshCart }: { products: 
 
         // CẬP NHẬT: Load và dọn dẹp danh sách yêu thích mỗi khi giỏ hàng thay đổi
         const loadFavorites = async () => {
+            if (!currentUser) return;
             try {
-                const stored = await AsyncStorage.getItem('favorite_products');
+                const stored = await AsyncStorage.getItem(FAVORITE_PRODUCTS_KEY);
                 if (stored) {
                     const favsFromStorage: string[] = JSON.parse(stored);
                     // Lọc ra các ID yêu thích vẫn còn tồn tại trong giỏ hàng
                     const validFavs = favsFromStorage.filter(id =>
-                        products.some(p => p.sellProductId === id)
+                        products.some(p => p.cartProductId === id)
                     );
                     setFavoriteIds(new Set(validFavs));
 
                     if (validFavs.length !== favsFromStorage.length) {
-                        await AsyncStorage.setItem('favorite_products', JSON.stringify(validFavs));
+                        await AsyncStorage.setItem(FAVORITE_PRODUCTS_KEY, JSON.stringify(validFavs));
                     }
                 }
             } catch (e) {
@@ -90,23 +93,37 @@ export default function FavoriteProducts({ products, refreshCart }: { products: 
         if (selectionChanged) {
             setSelectedItems(newSelected);
         }
-    }, [products]);
+    }, [products, currentUser, FAVORITE_PRODUCTS_KEY]);
 
+    // useEffect(() => {
+    //     if (favoriteIds.size === 0 || selectedItems.size === 0) return;
+    //     const newSelected = new Map(selectedItems);
+    //     let changed = false;
+    //     for (const id of Array.from(newSelected.keys())) {
+    //         if (favoriteIds.has(id)) {
+    //             newSelected.delete(id);
+    //             changed = true;
+    //         }
+    //     }
+    //     if (changed) setSelectedItems(newSelected);
+    // }, [favoriteIds]);
     useEffect(() => {
-        if (favoriteIds.size === 0 || selectedItems.size === 0) return;
         const newSelected = new Map(selectedItems);
         let changed = false;
-        for (const id of Array.from(newSelected.keys())) {
-            if (favoriteIds.has(id)) {
-                newSelected.delete(id);
+        for (const favId of Array.from(favoriteIds)) {
+            const favoritedItem = cartProducts.find(p => p.cartProductId === favId);
+            if (favoritedItem && newSelected.has(favoritedItem.sellProductId)) {
+                newSelected.delete(favoritedItem.sellProductId);
                 changed = true;
             }
         }
-        if (changed) setSelectedItems(newSelected);
-    }, [favoriteIds]);
+        if (changed) {
+            setSelectedItems(newSelected);
+        }
+    }, [favoriteIds, cartProducts]);
 
     const selectableItems = useMemo(
-        () => cartProducts.filter(item => !favoriteIds.has(item.sellProductId)),
+        () => cartProducts.filter(item => !favoriteIds.has(item.cartProductId)),
         [cartProducts, favoriteIds]
     );
 
@@ -122,11 +139,11 @@ export default function FavoriteProducts({ products, refreshCart }: { products: 
             newFavs.add(id);
         }
         setFavoriteIds(newFavs);
-        await AsyncStorage.setItem('favorite_products', JSON.stringify(Array.from(newFavs)));
+        await AsyncStorage.setItem(FAVORITE_PRODUCTS_KEY, JSON.stringify(Array.from(newFavs)));
     };
 
     const handleToggleSelection = (item: CartProductItem) => {
-        if (favoriteIds.has(item.sellProductId)) return;
+        if (favoriteIds.has(item.cartProductId)) return;
 
         const newSelected = new Map(selectedItems);
         if (newSelected.has(item.sellProductId)) {
@@ -217,6 +234,47 @@ export default function FavoriteProducts({ products, refreshCart }: { products: 
         );
     };
 
+    // const handleCheckout = async () => {
+    //     const itemsToBuy = Array.from(selectedItems.entries());
+    //     if (itemsToBuy.length === 0) {
+    //         Alert.alert("No items selected", "Please select items to checkout.");
+    //         return;
+    //     }
+
+    //     setIsCheckingOut(true);
+    //     // Dùng Promise.allSettled để thực hiện tất cả các lệnh mua, dù có lỗi hay không
+    //     const results = await Promise.allSettled(
+    //         itemsToBuy.map(([sellProductId, quantity]) => buyProductOnSale({ sellProductId, quantity }))
+    //     );
+
+    //     let outOfStockErrorOccurred = false;
+    //     results.forEach(result => {
+    //         if (result.status === 'rejected') {
+    //             const errorMsg = result.reason?.error?.toLowerCase() || '';
+    //             // Kiểm tra thông báo lỗi đặc biệt
+    //             if (errorMsg.includes("out of stock or no longer available")) {
+    //                 outOfStockErrorOccurred = true;
+    //             }
+    //         }
+    //     });
+
+    //     setIsCheckingOut(false);
+
+    //     if (outOfStockErrorOccurred) {
+    //         Alert.alert(
+    //             "Stock has changed",
+    //             "The quantity of some items has changed or they are no longer for sale. Would you like to refresh your cart?",
+    //             [
+    //                 { text: "Cancel", style: 'cancel' }, // "Để kỉ niệm"
+    //                 { text: "OK", onPress: refreshCart },
+    //             ]
+    //         );
+    //     } else {
+    //         Alert.alert("Checkout Complete", "Thank you for your purchase!");
+    //         refreshCart(); // Tải lại giỏ hàng để xóa các sản phẩm đã mua
+    //     }
+    // };
+
     const handleCheckout = async () => {
         const itemsToBuy = Array.from(selectedItems.entries());
         if (itemsToBuy.length === 0) {
@@ -225,36 +283,57 @@ export default function FavoriteProducts({ products, refreshCart }: { products: 
         }
 
         setIsCheckingOut(true);
-        // Dùng Promise.allSettled để thực hiện tất cả các lệnh mua, dù có lỗi hay không
+
         const results = await Promise.allSettled(
             itemsToBuy.map(([sellProductId, quantity]) => buyProductOnSale({ sellProductId, quantity }))
         );
 
-        let outOfStockErrorOccurred = false;
-        results.forEach(result => {
-            if (result.status === 'rejected') {
-                const errorMsg = result.reason?.error?.toLowerCase() || '';
-                // Kiểm tra thông báo lỗi đặc biệt
-                if (errorMsg.includes("out of stock or no longer available")) {
-                    outOfStockErrorOccurred = true;
+        const outOfStockItems: string[] = [];
+        let hasOtherErrors = false;
+        let successfulPurchases = 0;
+
+        results.forEach((result, index) => {
+            const [sellProductId] = itemsToBuy[index];
+
+            if (result.status === 'fulfilled' && result.value.status) {
+                successfulPurchases++;
+            } else {
+                // Lấy ra thông báo lỗi, dù là từ 'rejected' hay 'fulfilled' với status: false
+                const errorMsg = result.status === 'rejected'
+                    ? (result.reason?.error || result.reason?.message || '')
+                    : (result.value?.error || '');
+
+                if (errorMsg.toLowerCase().includes("not enough product") || errorMsg.toLowerCase().includes("out of stock")) {
+                    outOfStockItems.push(sellProductId);
+                } else {
+                    hasOtherErrors = true;
                 }
             }
         });
 
         setIsCheckingOut(false);
 
-        if (outOfStockErrorOccurred) {
-            Alert.alert(
-                "Stock has changed",
-                "The quantity of some items has changed or they are no longer for sale. Would you like to refresh your cart?",
-                [
-                    { text: "Cancel", style: 'cancel' }, // "Để kỉ niệm"
-                    { text: "OK", onPress: refreshCart },
-                ]
-            );
-        } else {
+        // Xử lý kết quả sau khi đã lặp qua tất cả
+        if (outOfStockItems.length > 0) {
+            const message = successfulPurchases > 0
+                ? "Some items were purchased, but others are out of stock. Would you like to remove the unavailable items from your cart?"
+                : "The selected products are out of stock or no longer available. Would you like to remove them from your cart?";
+
+            Alert.alert("Stock Has Changed", message, [
+                { text: "Cancel", style: 'cancel', onPress: () => refreshCart() },
+                {
+                    text: "OK", onPress: async () => {
+                        await Promise.all(outOfStockItems.map(id => removeFromCart({ sellProductId: id, mangaBoxId: "" })));
+                        refreshCart();
+                    }
+                },
+            ]);
+        } else if (hasOtherErrors) {
+            Alert.alert("Error", "An unexpected error occurred during checkout. Please try again.");
+            refreshCart();
+        } else if (successfulPurchases > 0) {
             Alert.alert("Checkout Complete", "Thank you for your purchase!");
-            refreshCart(); // Tải lại giỏ hàng để xóa các sản phẩm đã mua
+            refreshCart();
         }
     };
 
@@ -285,14 +364,14 @@ export default function FavoriteProducts({ products, refreshCart }: { products: 
         // Lấy số lượng từ state giỏ hàng (API), không phải từ state lựa chọn
         const displayQuantity = item.quantity;
         // THÊM MỚI: Kiểm tra xem item có trong danh sách yêu thích không
-        const isFavorited = favoriteIds.has(item.sellProductId);
+        const isFavorited = favoriteIds.has(item.cartProductId);
 
         return (
             <View style={styles.itemContainer}>
                 {/* CẬP NHẬT: Thêm lại icon trái tim */}
                 <TouchableOpacity
                     style={styles.favoriteButton}
-                    onPress={() => toggleFavorite(item.sellProductId)}
+                    onPress={() => toggleFavorite(item.cartProductId)}
                 >
                     <Ionicons
                         name={isFavorited ? 'heart' : 'heart-outline'}
@@ -333,7 +412,7 @@ export default function FavoriteProducts({ products, refreshCart }: { products: 
             <FlatList
                 data={cartProducts}
                 renderItem={renderItem}
-                keyExtractor={(item) => item.sellProductId}
+                keyExtractor={(item) => item.cartProductId}
                 contentContainerStyle={styles.listContent}
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>

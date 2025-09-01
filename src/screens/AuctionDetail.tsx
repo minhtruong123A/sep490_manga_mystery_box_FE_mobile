@@ -27,7 +27,7 @@ const getRarityColor = (rarity?: string) => {
 export default function AuctionDetail({ route }: RootStackScreenProps<'AuctionDetail'>) {
     const { auctionId, startTime, endTime } = route.params;
     const navigation = useNavigation<AppNavigationProp>();
-    const { user: currentUser, userToken, isAuctionJoined } = useAuth();
+    const { user: currentUser, userToken, isAuctionJoined, setAuctionStatus } = useAuth();
     const [auctionData, setAuctionData] = useState<AuctionDetailData | null>(null);
     const [bidHistory, setBidHistory] = useState<BidHistoryItem[]>([]);
     const [hasJoinedThisSession, setHasJoinedThisSession] = useState(false);
@@ -171,15 +171,42 @@ export default function AuctionDetail({ route }: RootStackScreenProps<'AuctionDe
     }, [auctionId, initializeWebSocket, PENDING_AUCTION_KEY]);
 
     // useEffect để gọi hàm loadData
-    useEffect(() => {
-        loadInitialData();
-    }, [loadInitialData]);
+    // useEffect(() => {
+    //     loadInitialData();
+    // }, [loadInitialData]);
+    useFocusEffect(
+        useCallback(() => {
+            loadInitialData();
+        }, [loadInitialData])
+    );
 
     useEffect(() => {
-        return () => {
-            // Chỉ cần đóng socket khi thoát màn hình
-            socketRef.current?.close();
-        };
+        // Nếu người dùng đang ở trong phiên này và trạng thái toàn cục chuyển thành false (hết đấu giá)
+        if (hasJoinedThisSession && !isAuctionJoined) {
+            const checkWinnerAndNotify = async () => {
+                socketRef.current?.close();
+                setHasJoinedThisSession(false);
+                await AsyncStorage.removeItem(PENDING_AUCTION_KEY);
+
+                const latestHistory = await getBidAuction(auctionData!.auctionSessionId);
+                const winner = latestHistory.data?.[0];
+                const alertMessage = winner && winner.user_id === currentUser?.id
+                    ? "Congratulations! You are the winning bidder for this auction. Please wait for the final confirmation and details of your purchase."
+                    : "The auction has ended. Thank you for participating! Keep an eye out for upcoming auctions and opportunities to bid again.";
+
+                Alert.alert("Auction Finished", alertMessage, [{
+                    text: 'OK', onPress: () => {
+                        navigation.navigate("MainTabs", { screen: "Shop", params: { screen: "Shop", params: { screen: "Mystery Box" } } });
+                    }
+                }]);
+            };
+            checkWinnerAndNotify();
+        }
+    }, [isAuctionJoined, hasJoinedThisSession]);
+
+    // Dọn dẹp socket khi thoát màn hình
+    useEffect(() => {
+        return () => socketRef.current?.close();
     }, []);
 
     // HÀM ĐÃ ĐƯỢC VIẾT LẠI THEO LOGIC MỚI
@@ -187,7 +214,7 @@ export default function AuctionDetail({ route }: RootStackScreenProps<'AuctionDe
         if (!auctionData) return;
         Alert.alert(
             "Join Auction",
-            "Are you sure you want to join this auction? For the next 15 minutes, you will not be able to purchase items or request withdrawals. Do you want to continue?",
+            "Are you sure you want to join this auction? Until the auction ends, you will not be able to purchase items or request withdrawals. Do you want to continue?",
             [
                 { text: "Cancel", style: 'cancel' },
                 {
@@ -218,6 +245,7 @@ export default function AuctionDetail({ route }: RootStackScreenProps<'AuctionDe
                                     // Lỗi từ API joinAuction
                                     const setupgogo = await AsyncStorage.setItem(PENDING_AUCTION_KEY, auctionData.auctionSessionId);
                                     console.log("check auction" + setupgogo);
+                                    setAuctionStatus(true);
                                     setHasJoinedThisSession(true);
                                     await initializeWebSocket(auctionData.auctionSessionId);
                                 } else {

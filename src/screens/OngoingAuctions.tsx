@@ -26,6 +26,12 @@ type AuctionWithSeller = AuctionItem & {
     seller: UserProfile | null;
 };
 
+const ensureUtc = (timeStr: string) => {
+    if (!timeStr) return new Date(0); // Trả về ngày không hợp lệ nếu thiếu
+    // Thêm 'Z' nếu chuỗi thời gian chưa có thông tin timezone
+    return new Date(timeStr.endsWith('Z') ? timeStr : timeStr + 'Z');
+};
+
 export default function OngoingAuctions() {
     const navigation = useNavigation<RootStackNavigationProp>();
     const [filter, setFilter] = useState<'started' | 'waiting'>('started');
@@ -83,6 +89,7 @@ export default function OngoingAuctions() {
                         }
                     })
                 );
+                auctionsWithSeller.sort((b, a) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime());
                 setAuctions(auctionsWithSeller);
             }
         } catch (err: any) {
@@ -104,11 +111,7 @@ export default function OngoingAuctions() {
 
     const renderItem = ({ item }: { item: AuctionWithSeller }) => {
         // SỬA LỖI: Hàm helper để đảm bảo thời gian được xử lý là UTC
-        const ensureUtc = (timeStr: string) => {
-            if (!timeStr) return new Date(0); // Trả về ngày không hợp lệ nếu thiếu
-            // Thêm 'Z' nếu chuỗi thời gian chưa có thông tin timezone
-            return new Date(timeStr.endsWith('Z') ? timeStr : timeStr + 'Z');
-        };
+
 
         const now = new Date();
         const startTime = ensureUtc(item.start_time);
@@ -132,11 +135,13 @@ export default function OngoingAuctions() {
             const hours = Math.floor((timeLeftMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const minutes = Math.floor((timeLeftMs % (1000 * 60 * 60)) / (1000 * 60));
 
-            if (days > 0) {
-                timeDisplay = `Ends in: ${days}d ${hours}h`;
-            } else {
-                timeDisplay = `Ends in: ${hours}h ${minutes}m`;
-            }
+            const parts = [];
+            if (days > 0) parts.push(`${days}d`);
+            if (hours > 0) parts.push(`${hours}h`);
+            if (minutes > 0 || (days === 0 && hours === 0)) parts.push(`${minutes}m`); // Luôn hiển thị phút nếu không có ngày/giờ
+
+            timeDisplay = `Ends in: ${parts.join(' ')}`;
+
         } else {
             timeDisplay = `Ended on: ${endTime.toLocaleDateString('vi-VN')}`;
         }
