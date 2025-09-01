@@ -89,6 +89,7 @@ export default function OngoingAuctions() {
                         }
                     })
                 );
+                auctionsWithSeller.sort((b, a) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime());
                 setAuctions(auctionsWithSeller);
             }
         } catch (err: any) {
