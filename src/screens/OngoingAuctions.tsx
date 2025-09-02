@@ -26,11 +26,11 @@ type AuctionWithSeller = AuctionItem & {
     seller: UserProfile | null;
 };
 
-const ensureUtc = (timeStr: string) => {
-    if (!timeStr) return new Date(0); // Trả về ngày không hợp lệ nếu thiếu
-    // Thêm 'Z' nếu chuỗi thời gian chưa có thông tin timezone
-    return new Date(timeStr.endsWith('Z') ? timeStr : timeStr + 'Z');
-};
+// const ensureUtc = (timeStr: string) => {
+//     if (!timeStr) return new Date(0); // Trả về ngày không hợp lệ nếu thiếu
+//     // Thêm 'Z' nếu chuỗi thời gian chưa có thông tin timezone
+//     return new Date(timeStr.endsWith('Z') ? timeStr : timeStr + 'Z');
+// };
 
 export default function OngoingAuctions() {
     const navigation = useNavigation<RootStackNavigationProp>();
@@ -111,11 +111,9 @@ export default function OngoingAuctions() {
 
     const renderItem = ({ item }: { item: AuctionWithSeller }) => {
         // SỬA LỖI: Hàm helper để đảm bảo thời gian được xử lý là UTC
-
-
         const now = new Date();
-        const startTime = ensureUtc(item.start_time);
-        const endTime = ensureUtc(item.end_time);
+        const startTime = new Date(item.start_time);
+        const endTime = new Date(item.end_time);
 
         let timeDisplay = '';
         const twentyFourHoursInMs = 24 * 60 * 60 * 1000;
