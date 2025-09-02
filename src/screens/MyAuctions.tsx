@@ -40,16 +40,16 @@ type EnrichedWinner = {
     hosterProfile: UserProfile | null;
 };
 
-const ensureUtc = (timeStr?: string | null) => {
-    if (!timeStr) return new Date(0);
-    return new Date(timeStr.endsWith('Z') ? timeStr : timeStr.replace(' ', 'T') + 'Z');
-};
+// const ensureUtc = (timeStr?: string | null) => {
+//     if (!timeStr) return new Date(0);
+//     return new Date(timeStr.endsWith('Z') ? timeStr : timeStr.replace(' ', 'T') + 'Z');
+// };
 
 
 // --- Helper Functions ---
 const formatTimeLeft = (endTime?: string | null) => {
     if (!endTime) return 'Unknown end time';
-    const ms = ensureUtc(endTime).getTime() - Date.now();
+    const ms = new Date(endTime).getTime() - Date.now();
     if (isNaN(ms)) return 'Invalid time';
     if (ms <= 0) return "Ended";
 
@@ -81,7 +81,8 @@ const formatDuration = (ms: number) => {
 // helpers (thay thế hiện tại)
 const formatDateTime = (iso?: string | null) => {
     if (!iso) return 'Unknown time';
-    const d = ensureUtc(iso); // Dùng ensureUtc thay vì new Date()
+    // const d = ensureUtc(iso); // Dùng ensureUtc thay vì new Date()
+    const d = new Date(iso);
     if (isNaN(d.getTime())) return 'Invalid time';
     try {
         // ưu tiên format theo vi-VN + timezone VN nếu khả dụng
@@ -106,12 +107,19 @@ const getStatusInfo = (item: AuctionItem): { text: string; color: string } => {
     }
 
     // chuyển sang số (ms) để so sánh / trừ an toàn
-    const now = new Date();
-    const start = ensureUtc(item.start_time);
-    const end = ensureUtc(item.end_time);
+    // const now = new Date();
+    // const start = ensureUtc(item.start_time);
+    // const end = ensureUtc(item.end_time);
+    const now = Date.now();
+    const start = new Date(item.start_time).getTime();
+    const end = new Date(item.end_time).getTime();
 
-    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-        return { text: 'Invalid time', color: '#6c757d' };
+    // if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+    //     return { text: 'Invalid time', color: '#6c757d' };
+    // }
+
+    if (isNaN(start) || isNaN(end)) {
+        console.warn('[getStatusInfo] Invalid date parse for auction', item._id, item.start_time, item.end_time);
     }
 
     switch (item.status) {
@@ -125,7 +133,8 @@ const getStatusInfo = (item: AuctionItem): { text: string; color: string } => {
             if (now > end) return { text: 'Ended', color: '#6c757d' };
 
             if (now < start) {
-                const msUntilStart = start.getTime() - now.getTime();
+                // const msUntilStart = start.getTime() - now.getTime();
+                const msUntilStart = start - now; // safe: number - number
                 if (msUntilStart >= MS_IN_24H) {
                     // còn >= 24h: show exact date + time
                     return { text: `Starts: ${formatDateTime(item.start_time)}`, color: '#17a2b8' };
@@ -328,7 +337,7 @@ export default function MyAuctions() {
             <View style={styles.financialsContainer}>
                 <Text style={styles.financialText}>Winning Bid: {item.auction_result.bidder_amount?.toLocaleString('vi-VN')} VND</Text>
                 <Text style={styles.financialText}>Host Claim: {item.auction_result.host_claim_amount?.toLocaleString('vi-VN')} VND</Text>
-                <Text style={styles.dateText}>Ended at: {ensureUtc(item.auction_info.end_time).toLocaleString('vi-VN')}</Text>
+                <Text style={styles.dateText}>Ended at: {new Date(item.auction_info.end_time).toLocaleString('vi-VN')}</Text>
             </View>
         </View>
     );

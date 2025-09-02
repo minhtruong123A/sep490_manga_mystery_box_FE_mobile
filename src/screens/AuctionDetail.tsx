@@ -55,7 +55,7 @@ export default function AuctionDetail({ route }: RootStackScreenProps<'AuctionDe
                             user_id: bid.bidder_id,
                             username: bidderUsername,
                             price: bid.bid_amount,
-                            created_at: bid.bid_time.replace(" ", "T") + "Z",
+                            created_at: bid.bid_time.replace(" ", "T"),
                         };
                     })
                 );
@@ -311,14 +311,16 @@ export default function AuctionDetail({ route }: RootStackScreenProps<'AuctionDe
 
     const isMyAuction = currentUser?.id === auctionData.sellerId;
     // SỬA LỖI: Thêm hàm helper để đảm bảo thời gian được xử lý là UTC
-    const ensureUtc = (timeStr: string) => {
-        if (!timeStr) return new Date(0);
-        return new Date(timeStr.endsWith('Z') ? timeStr : timeStr + 'Z');
-    };
+    // const ensureUtc = (timeStr: string) => {
+    //     if (!timeStr) return new Date(0);
+    //     return new Date(timeStr.endsWith('Z') ? timeStr : timeStr + 'Z');
+    // };
 
     const now = new Date();
-    const startDate = ensureUtc(startTime); // Dùng hàm helper
-    const endDate = ensureUtc(endTime);     // Dùng hàm helper
+    // const startDate = ensureUtc(startTime); // Dùng hàm helper
+    // const endDate = ensureUtc(endTime);     // Dùng hàm helper
+    const startDate = new Date(startTime);
+    const endDate = new Date(endTime);
     let auctionLiveStatus: 'Upcoming' | 'Ongoing' | 'Finished' = 'Ongoing';
 
     if (now < startDate) {
