@@ -118,7 +118,7 @@ export default function CustomHeader() {
     { label: 'Order History', action: () => navigation.navigate('OrderHistory'), icon: <OrderIcon /> },
     { label: 'Exchanges', action: () => navigation.navigate('ExchangeRequests'), icon: <ExchangeIconMenu /> },
     // { label: 'Settings', action: () => navigation.navigate('Settings'), icon: <SettingsIcon /> },
-    { label: 'Policies', action: () => navigation.navigate('Help & Feedback'), icon: <HelpIcon /> },
+    { label: 'Rules & Policies', action: () => navigation.navigate('Help & Feedback'), icon: <HelpIcon /> },
     { label: 'Log out', action: handleLogout, icon: <LogoutIcon /> },
   ];
 
