@@ -262,11 +262,55 @@ export default function FavoriteBoxes({ boxes, refreshCart }: { boxes: CartBoxIt
       }
 
       if (validItemsToBuy.length > 0) {
-        await Promise.allSettled(
+        const results = await Promise.allSettled(
           validItemsToBuy.map(payload => buyMysteryBox(payload))
         );
-        Alert.alert("Checkout Complete", "Thank you for your purchase!");
-        refreshCart();
+        const outOfStockItems: string[] = [];
+        let hasOtherErrors = false;
+        let successfulPurchases = 0;
+
+        results.forEach((result, index) => {
+          const [mangaBoxId] = itemsToBuy[index];
+
+          if (result.status === 'fulfilled' && result.value.status) {
+            successfulPurchases++;
+          } else {
+            const errorMsg = result.status === 'rejected'
+              ? (result.reason?.error || result.reason?.message || '')
+              : (result.value?.error || '');
+
+            if (errorMsg.toLowerCase().includes("Not enough quantity") || errorMsg.toLowerCase().includes("This MangaBox is not available")) {
+              outOfStockItems.push(mangaBoxId);
+            } else {
+              hasOtherErrors = true;
+            }
+          }
+        });
+
+
+        if (outOfStockItems.length > 0) {
+          const message = successfulPurchases > 0
+            ? "Some items were purchased, but others are out of stock. Would you like to remove the unavailable boxes from your cart?"
+            : "The selected boxes are out of stock or no longer available. Would you like to remove them from your cart?";
+
+          Alert.alert("Stock Has Changed", message, [
+            { text: "Cancel", style: 'cancel', onPress: () => refreshCart() },
+            {
+              text: "OK", onPress: async () => {
+                await Promise.all(outOfStockItems.map(id => removeFromCart({ sellProductId: "", mangaBoxId: id })));
+                refreshCart();
+              }
+            },
+          ]);
+        } else if (hasOtherErrors) {
+          Alert.alert("Error", "An unexpected error occurred during checkout. Please try again.");
+          refreshCart();
+        } else if (successfulPurchases > 0) {
+          Alert.alert("Checkout Complete", "Thank you for your purchase!");
+          refreshCart();
+        }
+        // Alert.alert("Checkout Complete", "Thank you for your purchase!");
+        // refreshCart();
       }
 
     } catch (error) {
@@ -285,6 +329,16 @@ export default function FavoriteBoxes({ boxes, refreshCart }: { boxes: CartBoxIt
       setSelectedItems(allSelected);
     }
   };
+
+  const dateTimeOptions = {
+    timeZone: 'UTC',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    // hour: '2-digit',
+    // minute: '2-digit',
+    // hour12: false
+  } as const;
 
   // --- TÍNH TOÁN ĐỂ HIỂN THỊ ---
   const totalAmount = useMemo(() => {
@@ -329,6 +383,10 @@ export default function FavoriteBoxes({ boxes, refreshCart }: { boxes: CartBoxIt
         <ApiImage urlPath={item.box.urlImage} style={styles.itemImage} />
         <View style={styles.itemInfo}>
           <Text style={styles.itemName} numberOfLines={2}>{item.box.mysteryBoxName}</Text>
+          <Text style={styles.itemName2} numberOfLines={2}>Quantity: {item.box.quantity}</Text>
+          <Text style={styles.itemName2} numberOfLines={2}>Start: {new Date(item.box.start_time).toLocaleString('vi-VN', dateTimeOptions)}</Text>
+          <Text style={styles.itemName2} numberOfLines={2}>End: {new Date(item.box.end_time).toLocaleString('vi-VN', dateTimeOptions)}</Text>
+
           <Text style={styles.itemPrice}>{item.box.mysteryBoxPrice.toLocaleString('vi-VN')} VND</Text>
         </View>
         {isSelected && !isFavorited && (
@@ -439,6 +497,12 @@ const styles = StyleSheet.create({
   itemImage: { width: 70, height: 70, borderRadius: 8, marginRight: 12 },
   itemInfo: { flex: 1 },
   itemName: { fontSize: 16, fontFamily: 'Oxanium-SemiBold' },
+  itemName2: {
+    fontSize: 11,
+    fontFamily: 'Oxanium-Regular',
+    color: '#aaa',
+    marginBottom: 4,
+  },
   itemPrice: { fontSize: 14, fontFamily: 'Oxanium-Regular', color: '#d9534f', marginTop: 4 },
   quantityContainer: {
     flexDirection: 'row',

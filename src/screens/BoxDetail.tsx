@@ -90,7 +90,9 @@ export default function BoxDetail({ route }: ShopStackScreenProps<'Box Detail'>)
           const response = await getMysteryBoxDetail(boxId);
 
           if (response.status && response.data) {
-            if (response.data.status === 0) {
+            const endTime = new Date(response.data.end_time);
+            const now = new Date();
+            if (response.data.status === 0 || response.data.quantity <= 0 || endTime < now) {
               throw new Error("This Mystery Box is currently unavailable.");
             }
             setBox(response.data);
@@ -165,14 +167,15 @@ export default function BoxDetail({ route }: ShopStackScreenProps<'Box Detail'>)
           Alert.alert("Purchase Successful!", "Thank you for your purchase.");
           navigation.navigate('OrderHistory');
         } else {
-          throw new Error(response.error || "Failed to complete purchase.");
+          // throw new Error(response.error || "Failed to complete purchase.");
+          Alert.alert("Error", response?.error || "failed to buy mystery box.");
         }
       } else { // action === 'add'
         const response = await addToCart({ sellProductId: "", mangaBoxId: box.id, quantity });
         if (response.status) {
           Alert.alert("Success", `${box.mysteryBoxName} (x${quantity}) has been added to your cart.`);
         } else {
-          throw new Error(response.error || "Failed to add to cart.");
+          Alert.alert("Error", response?.error || "Failed to add to cart.");
         }
       }
     } catch (err: any) {
@@ -225,6 +228,16 @@ export default function BoxDetail({ route }: ShopStackScreenProps<'Box Detail'>)
     );
   }
 
+  const dateTimeOptions = {
+    timeZone: 'UTC',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  } as const;
+
   // THAY ĐỔI: Giao diện hiển thị dữ liệu từ API
   return (
     <SafeAreaView style={styles.container}>
@@ -259,6 +272,14 @@ export default function BoxDetail({ route }: ShopStackScreenProps<'Box Detail'>)
           {/* Sử dụng mysteryBoxDescription */}
           <Text style={styles.descriptionTitle}>Description</Text>
           <Text style={styles.descriptionText}>{box.mysteryBoxDescription}</Text>
+
+          <Text style={styles.quantityTextLimit}>Quantity left: {box.quantity}</Text>
+          <Text style={styles.dateText}>
+            Start on: {new Date(box.start_time).toLocaleString('vi-VN', dateTimeOptions)}
+          </Text>
+          <Text style={styles.dateText}>
+            End on: {new Date(box.end_time).toLocaleString('vi-VN', dateTimeOptions)}
+          </Text>
 
           {/* Sử dụng mảng products từ API */}
           {box.products && box.products.length > 0 && (
@@ -464,5 +485,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     fontSize: 18,
     fontFamily: 'Oxanium-Bold',
+  },
+  quantityTextLimit: { fontSize: 16, fontFamily: 'Oxanium-Regular', color: '#333', fontStyle: 'italic' },
+  dateText: {
+    fontSize: 14,
+    fontFamily: 'Oxanium-Regular',
+    color: '#aaa',
+    marginBottom: 4,
   },
 });
