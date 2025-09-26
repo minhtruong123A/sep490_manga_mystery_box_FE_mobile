@@ -1,10 +1,10 @@
-import React, { useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ActivityIndicator, FlatList, TouchableOpacity } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
 // --- Types, APIs, Components ---
 import { UserProfile, AppNavigationProp, CollectionDetailItem } from '../types/types'; // Import các type cần thiết
-import { fetchMyAuctionList, GetJoinedHistoryAuction, fetchAuctionWinner } from '../services/api.auction'; // Import cả 2 API
+import { fetchMyAuctionList, GetJoinedHistoryAuction, fetchAuctionWinner, getBidAuction, fetchAuctionProduct } from '../services/api.auction'; // Import cả 2 API
 import { getOtherProfile } from '../services/api.user';
 import { getCollectionDetail } from '../services/api.product';
 import ApiImage from '../components/ApiImage';
@@ -45,6 +45,194 @@ type EnrichedWinner = {
 //     return new Date(timeStr.endsWith('Z') ? timeStr : timeStr.replace(' ', 'T') + 'Z');
 // };
 
+type ProductDetails = {
+    name: string;
+    urlImage: string;
+    rarityName: string;
+    starting_price: number;
+    current_price: number;
+    quantity: number;
+};
+
+type Bid = {
+    bidder_id: string;
+    bid_amount: number;
+};
+
+type TopBidder = Bid & {
+    username: string;
+};
+
+const AuctionListItem = ({ item, activeFilter }: { item: AuctionWithSeller; activeFilter: 'Hosted' | 'My Bids' }) => {
+    const navigation = useNavigation<AppNavigationProp>();
+
+    // State riêng cho từng item
+    const [product, setProduct] = useState<ProductDetails | null>(null);
+    const [topBidders, setTopBidders] = useState<TopBidder[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [firstFeeCharge, setFirstFeeCharge] = useState<string | null>(null);
+
+    // useEffect để gọi API khi component được render
+    useEffect(() => {
+        const fetchDetails = async () => {
+            setIsLoading(true);
+            try {
+                // Sử dụng Promise.all để gọi các API song song
+                const [productDetailRes, bidRes, Fee] = await Promise.all([
+                    fetchAuctionProduct(item.id || item._id || ''), // Giả sử productImageUrl là ID, cần điều chỉnh nếu khác
+                    getBidAuction(item.id || item._id),
+                    fetchMyAuctionList()
+                ]);
+                if (Fee.data && Fee.data.length > 0) {
+                    console.log("Fee charge:", Fee.data[0].fee_charge);
+                    setFirstFeeCharge(Fee.data[0].fee_charge ?? null);
+                }
+
+                // Xử lý chi tiết sản phẩm
+                if (productDetailRes.success && productDetailRes.data.length > 0) {
+                    const auctionProductData = productDetailRes.data[0];
+                    const userProductId = productDetailRes.data[0].user_product_id;
+                    const collectionDetailRes = await getCollectionDetail(userProductId);
+                    if (collectionDetailRes.status) {
+                        setProduct({
+                            ...collectionDetailRes.data,
+                            starting_price: auctionProductData.starting_price,
+                            current_price: auctionProductData.current_price,
+                            quantity: auctionProductData.quantity,
+                        });
+                    }
+                }
+
+                // Xử lý top 5 bidders
+                if (bidRes.success && Array.isArray(bidRes.data)) {
+                    const highestBids = new Map<string, Bid>();
+                    bidRes.data.forEach((bid: Bid) => {
+                        if (!highestBids.has(bid.bidder_id) || bid.bid_amount > highestBids.get(bid.bidder_id)!.bid_amount) {
+                            highestBids.set(bid.bidder_id, bid);
+                        }
+                    });
+
+                    const top5 = Array.from(highestBids.values())
+                        .sort((a, b) => b.bid_amount - a.bid_amount)
+                        .slice(0, 5);
+
+                    const biddersWithProfiles = await Promise.all(
+                        top5.map(async (bid) => {
+                            const profile = await getOtherProfile(bid.bidder_id);
+                            return { ...bid, username: profile.status ? profile.data.username : 'Unknown' };
+                        })
+                    );
+                    setTopBidders(biddersWithProfiles);
+                }
+            } catch (err) {
+                console.error(`Failed to fetch details for auction ${item._id}:`, err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchDetails();
+    }, [item._id, item.id, item.productImageUrl]);
+
+    if (isLoading) {
+        return (
+            <View style={[styles.cardContainer, { justifyContent: 'center', alignItems: 'center' }]}>
+                <ActivityIndicator color="#555" />
+            </View>
+        );
+    }
+    const formatCurrency = (value: any) => {
+        if (value == null || isNaN(Number(value))) {
+            return '0';
+        }
+        if (value >= 1e12) {
+            return (value / 1e12).toFixed(2) + ' T'; // Trillion
+        } else if (value >= 1e9) {
+            return (value / 1e9).toFixed(2) + ' B'; // Billion
+        } else {
+            return value.toLocaleString('vi-VN');
+        }
+    };
+    const statusInfo = getStatusInfo(item);
+    const feePercent = firstFeeCharge ? parseFloat(firstFeeCharge.replace('%', '')) / 100 : 0;
+    const incomingValue = product?.current_price ? product.current_price * (1 - feePercent) : 0;
+    const hostPercent = 1 - feePercent;
+    const hostPercentDisplay = Math.round(hostPercent * 100) + '%';
+
+    return (
+        <TouchableOpacity
+            style={styles.cardContainer}
+            onPress={() => navigation.navigate('AuctionDetail', {
+                auctionId: item.id || item._id,
+                startTime: item.start_time,
+                endTime: item.end_time,
+            })}
+        >
+            <View style={styles.mainInfoSection}>
+                <Text style={styles.auctionTitle} numberOfLines={2}>{item?.title || 'N/A'}</Text>
+                <Text style={styles.auctionDescription} numberOfLines={2}>{item?.descripition || 'N/A'}</Text>
+                {item.seller && (
+                    <View style={styles.sellerInfoContainer}>
+                        <Text style={styles.sellerName}>by host: </Text>
+                        <ApiImage
+                            urlPath={item.seller.profileImage} // Lấy ảnh profile của seller
+                            style={styles.sellerAvatar}
+                        />
+                        <Text style={styles.sellerName}> {item.seller.username}</Text>
+                    </View>
+                )}
+            </View>
+            {/* Phần thông tin sản phẩm */}
+            <View style={styles.productSection}>
+                <ApiImage
+                    urlPath={product?.urlImage}
+                    style={styles.productImageCard}
+                />
+                <View style={styles.productInfo}>
+                    <Text style={styles.productName}>{product?.name || 'Loading...'}</Text>
+                    <Text style={styles.productRarity}>Rarity: {product?.rarityName || '...'}</Text>
+                    <Text style={styles.productRarity}>Quantity: {product?.quantity || '...'}</Text>
+                    <Text style={[styles.statusText, { color: statusInfo.color }]}>{statusInfo.text}</Text>
+                </View>
+            </View>
+
+            {/* Phần thông tin cho tab "Hosted" */}
+            {/* {activeFilter === 'Hosted' && ( */}
+            <View style={styles.hostedSection}>
+                <View style={styles.hostedRow}>
+                    <Text style={styles.hostedLabel}>Initial Value:</Text>
+                    <Text style={styles.hostedValue}>{formatCurrency(item?.host_value || product?.current_price)} VND</Text>
+                </View>
+                <View style={styles.hostedRow}>
+                    <Text style={styles.hostedLabel}>Est. Income:</Text>
+                    <Text style={[styles.hostedValue, { color: '#28a745' }]}>{formatCurrency(item?.incoming_value || incomingValue)} VND</Text>
+                </View>
+                <View style={styles.hostedRow}>
+                    <Text style={styles.hostedLabel}>Platform Fee:</Text>
+                    <Text style={[styles.hostedValue, { color: '#e74c3c' }]}>{item?.fee_charge || firstFeeCharge}</Text>
+                </View>
+                <View style={styles.hostedRow}>
+                    <Text style={styles.hostedLabel}>Host Receives:</Text>
+                    <Text style={[styles.hostedValue, { color: '#e74c3c' }]}>{hostPercentDisplay}</Text>
+                </View>
+            </View>
+            {/* )} */}
+
+            {/* Phần Top Bidders */}
+            {topBidders.length > 0 && (
+                <View style={styles.biddersSection}>
+                    <Text style={styles.biddersTitle}>Top 5 Bidders</Text>
+                    {topBidders.map((bidder, index) => (
+                        <View key={index} style={styles.bidderRow}>
+                            <Text style={styles.bidderText}>{index + 1}. {bidder.username}</Text>
+                            <Text style={styles.bidderAmount}>{bidder.bid_amount.toLocaleString('vi-VN')} VND</Text>
+                        </View>
+                    ))}
+                </View>
+            )}
+        </TouchableOpacity>
+    );
+};
 
 // --- Helper Functions ---
 const formatTimeLeft = (endTime?: string | null) => {
@@ -159,6 +347,7 @@ export default function MyAuctions() {
     const [hostedAuctions, setHostedAuctions] = useState<AuctionWithSeller[]>([]);
     const [myBids, setMyBids] = useState<AuctionWithSeller[]>([]);
     const [winners, setWinners] = useState<EnrichedWinner[]>([]);
+    const [firstFeeCharge, setFirstFeeCharge] = useState<string | null>(null);
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -250,52 +439,6 @@ export default function MyAuctions() {
         }, [fetchData])
     );
 
-    const renderAuctionItem = ({ item }: { item: AuctionWithSeller }) => (
-        <TouchableOpacity
-            style={styles.itemContainer}
-            onPress={() => navigation.navigate('AuctionDetail', {
-                auctionId: item.id || item._id,
-                startTime: item.start_time,
-                endTime: item.end_time,
-            })}
-        >
-            <ApiImage
-                urlPath={item.productImageUrl || item.seller?.profileImage}
-                style={styles.itemImage}
-            />
-            <View style={styles.itemInfo}>
-                <Text style={styles.itemName} numberOfLines={2}>{item.title}</Text>
-                <Text style={styles.itemDescription} numberOfLines={1}>{item.descripition}</Text>
-                {item.seller && (
-                    <Text style={styles.sellerName}>by {item.seller.username}</Text>
-                )}
-                {activeFilter === 'Hosted' && (
-                    <View style={styles.hostedInfoContainer}>
-                        <Text style={styles.hostedInfoText}>
-                            Initial:
-                            <Text style={styles.valueText}>
-                                {typeof item.host_value === 'number'
-                                    ? `${item.host_value.toLocaleString('vi-VN')} VND`
-                                    : 'N/A'}
-                            </Text>
-                        </Text>
-                        <Text style={styles.hostedInfoText}>
-                            Est. Income:
-                            <Text style={[styles.valueText, { color: '#28a745' }]}>
-                                {typeof item.incoming_value === 'number'
-                                    ? `${item.incoming_value.toLocaleString('vi-VN')} VND`
-                                    : 'N/A'}
-                            </Text>
-                        </Text>
-                    </View>
-                )}
-                <Text style={[styles.statusText, { color: getStatusInfo(item).color }]}>
-                    {getStatusInfo(item).text}
-                </Text>
-            </View>
-        </TouchableOpacity>
-    );
-
     const renderWinnerItem = ({ item }: { item: EnrichedWinner }) => (
         <View style={styles.winnerItemContainer}>
             <Text style={styles.winnerTitle}>{item.auction_info.title}</Text>
@@ -375,7 +518,9 @@ export default function MyAuctions() {
                     data={activeFilter === 'Hosted' ? hostedAuctions : myBids}
                     keyExtractor={(item) => item._id}
                     contentContainerStyle={styles.listContent}
-                    renderItem={renderAuctionItem}
+                    renderItem={({ item }) => (
+                        <AuctionListItem item={item} activeFilter={activeFilter as 'Hosted' | 'My Bids'} />
+                    )}
                     ListEmptyComponent={
                         <View style={styles.center}>
                             <Text>No data found in this category.</Text>
@@ -478,7 +623,7 @@ const styles = StyleSheet.create({
     },
     profileName: {
         fontFamily: 'Oxanium-SemiBold',
-        fontSize: 15,
+        fontSize: 14,
     },
     profileSubText: {
         fontFamily: 'Oxanium-Regular',
@@ -501,5 +646,115 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: '#aaa',
         marginTop: 8,
+    },
+    cardContainer: {
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        padding: 12,
+        marginBottom: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    productSection: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16, // Thêm padding xung quanh
+    },
+    productImageCard: {
+        width: 105,
+        height: 150,
+        borderRadius: 8,
+        marginRight: 16,
+    },
+    productInfo: {
+        flex: 1,
+    },
+    productName: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#1c1c1e',
+    },
+    productRarity: {
+        fontSize: 13,
+        color: '#8e8e93',
+        marginTop: 2,
+    },
+    // statusText: {
+    //     fontSize: 14,
+    //     fontWeight: '500',
+    //     marginTop: 6,
+    // },
+    hostedSection: {
+        paddingVertical: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: '#e5e5ea',
+    },
+    hostedRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 3,
+    },
+    hostedLabel: {
+        fontSize: 14,
+        color: '#636366',
+    },
+    hostedValue: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#1c1c1e',
+    },
+    biddersSection: {
+        paddingTop: 12,
+    },
+    biddersTitle: {
+        fontSize: 15,
+        fontWeight: '600',
+        color: '#1c1c1e',
+        marginBottom: 8,
+    },
+    bidderRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingVertical: 3,
+    },
+    bidderText: {
+        fontSize: 14,
+        color: '#3c3c43',
+    },
+    bidderAmount: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#007aff',
+    },
+    mainInfoSection: {
+        paddingHorizontal: 16,
+        paddingTop: 16,
+        paddingBottom: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: '#e5e5ea',
+    },
+    auctionTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#1c1c1e',
+        marginBottom: 4,
+    },
+    auctionDescription: {
+        fontSize: 14,
+        color: '#636366',
+    },
+    sellerInfoContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 4,
+    },
+    sellerAvatar: {
+        width: 24,
+        height: 24,
+        borderRadius: 12,
     },
 });

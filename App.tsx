@@ -77,7 +77,7 @@ function AppNavigator() {
           <RootStack.Screen name="Profile" component={Profile} options={{ title: 'Profile' }} />
           <RootStack.Screen name="Settings" component={Settings} />
           <RootStack.Screen name="UpdateProfile" component={UpdateProfile} options={{ title: 'Update Profile' }} />
-          <RootStack.Screen name="Help & Feedback" component={HelpScreen} options={{ title: 'Policies' }} />
+          <RootStack.Screen name="Help & Feedback" component={HelpScreen} options={{ title: 'Rules & Policies' }} />
           <RootStack.Screen name="AddAuction" component={AddAuction} options={{ presentation: 'modal', title: 'Create Auction' }} />
         </>
       )}

@@ -34,8 +34,12 @@ export default function BoxShop({ navigation }: ShopTopTabScreenProps<'Mystery B
     try {
       // Không set loading lại mỗi lần focus để tránh màn hình bị giật
       const response = await getAllMysteryBoxes();
+      const now = new Date();
       if (response.status && Array.isArray(response.data)) {
-        const activeBoxes = response.data.filter((box: MysteryBoxItem) => box.status === 1);
+        const activeBoxes = response.data.filter((box: MysteryBoxItem) => {
+          const endTime = new Date(box.end_time);
+          return box.status === 1 && box.quantity > 0 && endTime > now;
+        });
         activeBoxes.reverse();
         setBoxes(activeBoxes);
       } else {

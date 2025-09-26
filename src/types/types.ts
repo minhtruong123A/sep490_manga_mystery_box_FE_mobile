@@ -136,6 +136,9 @@ export type MysteryBoxItem = {
     collectionTopic: string;
     createdAt: string; // Đây là một chuỗi ISO 8601 date string
     status: number;
+    quantity: number;
+    start_time: Date;
+    end_time: Date;
 };
 
 /**
@@ -152,6 +155,9 @@ export type MysteryBoxDetailItem = {
     urlImage: string;
     totalProduct: number;
     products: ProductInBox[]; // Mảng các sản phẩm có thể có trong box
+    quantity: number;
+    start_time: Date;
+    end_time: Date;
 };
 
 export type ProductOnSaleItem = {
