@@ -330,8 +330,8 @@ export default function AuctionDetail({ route }: RootStackScreenProps<'AuctionDe
                     );
                 } else if (bidRes.error_code === 403) {
                     Alert.alert(
-                        "Notice",
-                        bidRes?.error || "Your action is not allowed."
+                        "Invalid Bid",
+                        bidRes?.error || "Your bid is not allowed."
                     );
                 } else if (bidRes.error_code === 404) {
                     Alert.alert(
