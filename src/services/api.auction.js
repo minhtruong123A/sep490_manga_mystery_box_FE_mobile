@@ -44,6 +44,20 @@ export const fetchAuctionList = async (filter = "started") => {
   }
 };
 
+export const fetchAuctionExtendList = async (filter = "started") => {
+  try {
+    const response = await pythonApiWithFallback({
+      method: "get",
+      url: `/api/auction/all/extend?filter=${filter}`,
+      requiresAuth: true,
+    });
+    return response.data; // mảng 1 chiều
+  } catch (error) {
+    console.error(`Fetch auction list failed (filter=${filter}):`, error);
+    throw error;
+  }
+};
+
 export const fetchAuctionAllList = async (filter = "default") => {
   try {
     const response = await pythonApiWithFallback({
@@ -228,7 +242,7 @@ export const addBidAuction = async (auction_id, ammount) => {
   } catch (error) {
     console.error(
       `Add bid failed (auction_id=${auction_id}, ammount=${ammount}):`,
-      error.response?.data || error.message
+      error.response?.data
     );
 
     // nếu API có trả JSON { success, error, error_code } thì return về cho UI xử lý

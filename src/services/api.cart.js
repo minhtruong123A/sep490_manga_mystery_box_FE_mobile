@@ -19,7 +19,9 @@ export const addToCart = async ({ sellProductId, mangaBoxId, quantity = 1 }) => 
     return response.data;
   } catch (error) {
     console.error("Add to cart failed:", error);
-    throw error;
+    if (error.response?.data) {
+      return error.response.data;
+    }
   }
 };
 

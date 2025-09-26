@@ -43,6 +43,9 @@ export const buyMysteryBox = async ({ mangaBoxId, quantity }) => {
   } catch (error) {
     console.error("Error when buy mystery box:", error.response?.data);
     // Ném lỗi ra ngoài
-    throw error.response?.data || new Error("Error when buy mystery box");
+    // throw error.response?.data || new Error("Error when buy mystery box");
+    if (error.response?.data) {
+      return error.response.data;
+    }
   }
 };

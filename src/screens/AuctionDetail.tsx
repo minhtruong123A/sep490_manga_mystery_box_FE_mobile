@@ -30,6 +30,7 @@ export default function AuctionDetail({ route }: RootStackScreenProps<'AuctionDe
     const { user: currentUser, userToken, isAuctionJoined, setAuctionStatus } = useAuth();
     const [auctionData, setAuctionData] = useState<AuctionDetailData | null>(null);
     const [bidHistory, setBidHistory] = useState<BidHistoryItem[]>([]);
+    const [bidHistoryOutside, setBidHistoryOutside] = useState<BidHistoryItem[]>([]);
     const [hasJoinedThisSession, setHasJoinedThisSession] = useState(false);
     const [loading, setLoading] = useState(true);
     const [isJoining, setIsJoining] = useState(false);
@@ -168,6 +169,34 @@ export default function AuctionDetail({ route }: RootStackScreenProps<'AuctionDe
         } finally {
             setLoading(false);
         }
+
+        try {
+            const historyRess = await getBidAuction(auctionId);
+            if (historyRess.success && Array.isArray(historyRess.data)) {
+                const processedHistory = await Promise.all(
+                    historyRess.data.map(async (bid: any) => {
+                        let bidderUsername = 'A bidder';
+                        try {
+                            const profileRes = await getOtherProfile(bid.bidder_id);
+                            if (profileRes.status && profileRes.data) {
+                                bidderUsername = profileRes.data.username;
+                            }
+                        } catch { /* Bỏ qua lỗi */ }
+                        return {
+                            _id: bid._id,
+                            user_id: bid.bidder_id,
+                            username: bidderUsername,
+                            price: bid.bid_amount,
+                            created_at: bid.bid_time.replace(" ", "T"),
+                        };
+                    })
+                );
+                processedHistory.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+                setBidHistoryOutside(processedHistory);
+            }
+        } catch (error) {
+            console.error("Failed to fetch initial bid history", error);
+        }
     }, [auctionId, initializeWebSocket, PENDING_AUCTION_KEY]);
 
     // useEffect để gọi hàm loadData
@@ -275,6 +304,11 @@ export default function AuctionDetail({ route }: RootStackScreenProps<'AuctionDe
             return;
         }
 
+        if (amount % 100 !== 0) {
+            Alert.alert("Invalid Bid", "Bids must be entered in increments of 100 VND (e.g., 100, 200, 500).");
+            return;
+        }
+
         try {
             const bidRes = await addBidAuction(auctionData.auctionSessionId, amount);
             if (bidRes.success) {
@@ -294,10 +328,20 @@ export default function AuctionDetail({ route }: RootStackScreenProps<'AuctionDe
                             { text: "Yes", onPress: () => navigation.navigate('TopUpPackages') }
                         ]
                     );
+                } else if (bidRes.error_code === 403) {
+                    Alert.alert(
+                        "Invalid Bid",
+                        bidRes?.error || "Your bid is not allowed."
+                    );
+                } else if (bidRes.error_code === 404) {
+                    Alert.alert(
+                        "Not found",
+                        bidRes?.error || "The auction or data could not be found."
+                    );
                 }
             }
         } catch (err: any) {
-            Alert.alert("Error", err.message || "An error occurred.");
+            Alert.alert("Error", err.message || "An error occurred during the auction. Please try again.");
         }
     };
 
@@ -370,7 +414,11 @@ export default function AuctionDetail({ route }: RootStackScreenProps<'AuctionDe
                         <Text style={styles.descriptionText}>{auctionData.description}</Text>
                         <View style={styles.divider} />
                         {/* KẾT THÚC PHẦN CODE ĐƯỢC THÊM LẠI */}
-                        <Text style={styles.sectionTitle}>Bid History ({bidHistory.length} bids)</Text>
+                        {hasJoinedThisSession ? (
+                            <Text style={styles.sectionTitle}>Bid History ({bidHistory.length} bids)</Text>
+                        ) : (
+                            <Text style={styles.sectionTitle}>Bid History ({bidHistoryOutside.length} bids)</Text>
+                        )}
                         {hasJoinedThisSession ? (
                             <FlatList
                                 data={bidHistory}
@@ -384,7 +432,19 @@ export default function AuctionDetail({ route }: RootStackScreenProps<'AuctionDe
                                 )}
                                 scrollEnabled={false}
                             />
-                        ) : (
+                        ) : auctionLiveStatus === 'Finished' ? (
+                            <FlatList
+                                data={bidHistoryOutside}
+                                keyExtractor={item => item._id}
+                                renderItem={({ item }) => (
+                                    <View style={styles.historyItem}>
+                                        <Text style={styles.bidderName}>{item.username}</Text>
+                                        <Text style={styles.bidAmount}>{(item.price ?? 0).toLocaleString('vi-VN')} VND</Text>
+                                        <Text style={styles.bidTimestamp}>{new Date(item.created_at).toLocaleTimeString('vi-VN')}</Text>
+                                    </View>
+                                )}
+                                scrollEnabled={false}
+                            />) : (
                             <Text style={styles.placeholderText}>Join the auction to see bid history.</Text>
                         )}
                     </View>

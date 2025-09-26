@@ -33,6 +33,15 @@ const BoxItem = ({ item, onPress }: BoxItemProps) => {
             <View style={styles.itemInfo}>
                 <Text style={styles.itemName}>{item.mysteryBoxName}</Text>
                 <Text style={styles.itemCollection}>Collection: {item.collectionTopic}</Text>
+                <Text style={styles.itemCollection}>Quantity: {item.quantity}</Text>
+                <View style={styles.dateContainer}>
+                    <Text style={styles.dateText}>
+                        Start: {new Date(item.start_time).toLocaleDateString('vi-VN', { timeZone: 'UTC' })}
+                    </Text>
+                    <Text style={styles.dateText}>
+                        End: {new Date(item.end_time).toLocaleDateString('vi-VN', { timeZone: 'UTC' })}
+                    </Text>
+                </View>
                 <Text style={styles.itemPrice}>
                     {item.mysteryBoxPrice.toLocaleString('vi-VN')} VND
                 </Text>
@@ -83,6 +92,18 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#d9534f',
         fontFamily: 'Oxanium-SemiBold',
+    },
+    dateContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+        marginTop: 4,
+    },
+    dateText: {
+        fontSize: 12,
+        fontFamily: 'Oxanium-Regular',
+        color: '#aaa',
+        marginBottom: 4,
     },
 });
 
