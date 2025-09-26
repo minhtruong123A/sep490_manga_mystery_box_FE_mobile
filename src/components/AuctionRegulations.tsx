@@ -21,10 +21,9 @@ const regulations = [
         title: 'Article 3. Bidding Rules',
         points: [
             'The first valid bid placed by a participant must be equal to or higher than the starting price.',
-            'Each subsequent bid must be at least 5% higher than the current highest bid.',
-            'Example: If the current highest bid is 1,000,000 VND → the next bid must be ≥ 1,050,000 VND.',
+            'Each subsequent bid must be at least 5% higher than the current highest bid. Example: If the current highest bid is 1,000,000 VND → the next bid must be ≥ 1,050,000 VND.',
             'A participant cannot place consecutive bids against themselves (self-overbidding is prohibited).',
-            'If a bid is placed within the final 1 minute of the auction session, the system will automatically extend the auction time by an additional 2 minutes.',
+            // 'If a bid is placed within the final 1 minute of the auction session, the system will automatically extend the auction time by an additional 2 minutes.',
         ],
     },
     {
