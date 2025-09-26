@@ -138,7 +138,7 @@ const pythonApiWithFallback = async (config) => {
     return await pythonAxios(config);
   } catch (err) {
     console.warn("[Fallback] Python API failed. Retrying with backup...");
-    return await backupPythonAxios(config);
+    // return await backupPythonAxios(config);
   }
 };
 //export const PYTHON_API_BASE_URL = 'https://sep490-manga-mystery-box-pybe.onrender.com/py';
