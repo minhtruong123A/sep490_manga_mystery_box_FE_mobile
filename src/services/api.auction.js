@@ -242,7 +242,7 @@ export const addBidAuction = async (auction_id, ammount) => {
   } catch (error) {
     console.error(
       `Add bid failed (auction_id=${auction_id}, ammount=${ammount}):`,
-      error.response?.data || error.message
+      error.response?.data
     );
 
     // nếu API có trả JSON { success, error, error_code } thì return về cho UI xử lý
