@@ -1,0 +1,41 @@
+diff --git a/node_modules/react-native-reanimated/android/src/main/java/com/swmansion/reanimated/ReactNativeUtils.java b/node_modules/react-native-reanimated/android/src/main/java/com/swmansion/reanimated/ReactNativeUtils.java
+index 7378f10..e7c844a 100644
+--- a/node_modules/react-native-reanimated/android/src/main/java/com/swmansion/reanimated/ReactNativeUtils.java
++++ b/node_modules/react-native-reanimated/android/src/main/java/com/swmansion/reanimated/ReactNativeUtils.java
+@@ -14,7 +14,7 @@
+   public static float getBorderRadius(View view) {
+     Drawable background = view.getBackground();
+     if (background instanceof ReactViewBackgroundDrawable) {
+-      return ((ReactViewBackgroundDrawable) background).getFullBorderRadius();
++      return ((ReactViewBackgroundDrawable) background).getBorderRadius(ReactViewBackgroundDrawable.BorderRadiusLocation.TOP_LEFT);
+     }
+     return 0;
+   }
+diff --git a/node_modules/react-native-reanimated/android/src/reactNativeVersionPatch/ReanimatedUIManager/latest/com/swmansion/reanimated/layoutReanimation/ReanimatedUIManager.java b/node_modules/react-native-reanimated/android/src/reactNativeVersionPatch/ReanimatedUIManager/latest/com/swmansion/reanimated/layoutReanimation/ReanimatedUIManager.java
+index 4a6c891..162e212 100644
+--- a/node_modules/react-native-reanimated/android/src/reactNativeVersionPatch/ReanimatedUIManager/latest/com/swmansion/reanimated/layoutReanimation/ReanimatedUIManager.java
++++ b/node_modules/react-native-reanimated/android/src/reactNativeVersionPatch/ReanimatedUIManager/latest/com/swmansion/reanimated/layoutReanimation/ReanimatedUIManager.java
+@@ -138,7 +138,7 @@
+ 
+   @Override
+   public void measureLayoutRelativeToParent(int tag, Callback errorCallback, Callback successCallback) {
+-    super.measureLayoutRelativeToParent(tag, errorCallback, successCallback);
++    // super.measureLayoutRelativeToParent(tag, errorCallback, successCallback);
+   }
+ 
+   @Override
+@@ -198,12 +198,12 @@
+ 
+   @Override
+   public void showPopupMenu(int reactTag, ReadableArray items, Callback error, Callback success) {
+-    super.showPopupMenu(reactTag, items, error, success);
++    // super.showPopupMenu(reactTag, items, error, success);
+   }
+ 
+   @Override
+   public void dismissPopupMenu() {
+-    super.dismissPopupMenu();
++    // super.dismissPopupMenu();
+   }
+ 
+   @Override
