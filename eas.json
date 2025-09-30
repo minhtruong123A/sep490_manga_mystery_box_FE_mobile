@@ -12,6 +12,10 @@
     "preview": {
       "distribution": "internal",
       "channel": "preview",
+      "android": {
+        "buildType": "apk",
+        "image": "latest"
+      },
       "env": {
         "CS_API": "https://api.mmb.io.vn/cs",
         "BACKUP_CS_API": "https://mmb-be-dotnet.onrender.com",
@@ -21,7 +25,10 @@
     },
     "production": {
       "autoIncrement": true,
-      "channel": "production"
+      "channel": "production",
+      "android": {
+        "image": "latest"
+      }
     }
   },
   "submit": {
